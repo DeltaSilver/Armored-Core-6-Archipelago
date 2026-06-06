@@ -1,5 +1,5 @@
 # Armored Core 6 Archipelago
-A multiworld randomiser for Armored Core VI. Story, arena, and mercenary-rank
+An archipelago multiworld for Armored Core VI. Story, arena, and mercenary-rank
 progress send Archipelago checks; the AC parts you receive are shuffled across
 the multiworld.
 

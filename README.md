@@ -17,7 +17,7 @@ yet, so set your real save aside before playing and restore it afterwards.
 1. **Set up ModEngine2.** Download
    [ModEngine2](https://github.com/soulsmods/ModEngine2/releases) and confirm
    it launches the game normally before adding the mod.
-2. **Copy the mod files** into your ModEngine2 `mod` folder:
+2. **Copy the [mod](https://github.com/DeltaSilver/Armored-Core-6-Archipelago/releases) files** into your ModEngine2 `mod` folder:
    - `ac6ap.dll`
    - `ac6ap.cfg`
    - `regulation.bin`

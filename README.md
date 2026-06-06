@@ -52,3 +52,4 @@ yet, so set your real save aside before playing and restore it afterwards.
   missions, arena, and mercenary ranks (plus optional archive logs).
 - The `archive_logs` option relies on archive collection flags that are still
   being verified; treat that option as experimental for now.
+- Crashing during a mission will remove all items recived during that mission.

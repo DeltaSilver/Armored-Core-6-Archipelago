@@ -4,53 +4,23 @@ from BaseClasses import MultiWorld
 
 
 def set_rules(world: World, multiworld: MultiWorld, player: int) -> None:
-
-    # ── Region connections ────────────────────────────────────────────────
-    # Each chapter unlocks after the previous one's final story flag fires.
-    # We use the last progress flag of each chapter as the gate.
-
-    set_rule(
-        multiworld.get_entrance("Menu -> Chapter 2", player),
-        lambda state: state.can_reach("Chapter 1 First Garage Visit", "Location", player),
-    )
-    set_rule(
-        multiworld.get_entrance("Menu -> Chapter 3", player),
-        lambda state: state.can_reach("Chapter 2 Progress 10", "Location", player),
-    )
-    set_rule(
-        multiworld.get_entrance("Menu -> Chapter 4", player),
-        lambda state: state.can_reach("Chapter 3 Progress 10", "Location", player),
-    )
-    set_rule(
-        multiworld.get_entrance("Menu -> Chapter 5", player),
-        lambda state: state.can_reach("Chapter 4 Progress 10", "Location", player),
-    )
+    # ── Progression model ─────────────────────────────────────────────────
+    # Chapter/cycle order is enforced by the region graph (create_regions):
+    # Chapter 1 -> ... -> Chapter 5 -> NG+ Chapter 1 -> ... -> NG++ Chapter 5.
+    # AC6 has no item-based hard gates (you can clear any mission with default
+    # gear), so the region chain is the whole progression model — no per-chapter
+    # event-flag gates, which were unreliable anyway (chapter mission counts vary
+    # and change again in NG+/NG++). Goal/route locations are reachable once
+    # their cycle's Chapter 5 is, handled by placement.
 
     # ── Arena — sequential rank gates ─────────────────────────────────────
-    set_rule(
-        multiworld.get_location("Complete Arena E", player),
-        lambda state: state.can_reach("Complete Arena F", "Location", player),
-    )
-    set_rule(
-        multiworld.get_location("Complete Arena D", player),
-        lambda state: state.can_reach("Complete Arena E", "Location", player),
-    )
-    set_rule(
-        multiworld.get_location("Complete Arena C", player),
-        lambda state: state.can_reach("Complete Arena D", "Location", player),
-    )
-    set_rule(
-        multiworld.get_location("Complete Arena B", player),
-        lambda state: state.can_reach("Complete Arena C", "Location", player),
-    )
-    set_rule(
-        multiworld.get_location("Complete Arena A", player),
-        lambda state: state.can_reach("Complete Arena B", "Location", player),
-    )
-    set_rule(
-        multiworld.get_location("Complete Arena S", player),
-        lambda state: state.can_reach("Complete Arena A", "Location", player),
-    )
+    arena_order = ["F", "E", "D", "C", "B", "A", "S"]
+    for prev, cur in zip(arena_order, arena_order[1:]):
+        set_rule(
+            multiworld.get_location(f"Complete Arena {cur}", player),
+            lambda state, p=prev: state.can_reach(
+                f"Complete Arena {p}", "Location", player),
+        )
 
     # ── Mercenary ranks — sequential ──────────────────────────────────────
     for i in range(2, 18):
@@ -60,41 +30,3 @@ def set_rules(world: World, multiworld: MultiWorld, player: int) -> None:
                 f"Reach Mercenary Rank {prev}", "Location", player
             ),
         )
-
-    # ── Key missions — chapter gated ──────────────────────────────────────
-    set_rule(
-        multiworld.get_location("Chapter 1 Submission", player),
-        lambda state: state.can_reach("Chapter 1", "Region", player),
-    )
-    set_rule(
-        multiworld.get_location("Mining Ship and Dam Destruction", player),
-        lambda state: state.can_reach("Chapter 2", "Region", player),
-    )
-    set_rule(
-        multiworld.get_location("Over the Wall", player),
-        lambda state: state.can_reach("Chapter 2", "Region", player),
-    )
-    set_rule(
-        multiworld.get_location("Coordinates Indicated by the String", player),
-        lambda state: state.can_reach("Chapter 3", "Region", player),
-    )
-    set_rule(
-        multiworld.get_location("Continental Crust", player),
-        lambda state: state.can_reach("Chapter 3", "Region", player),
-    )
-    set_rule(
-        multiworld.get_location("Defeat Iceworm", player),
-        lambda state: state.can_reach("Chapter 4", "Region", player),
-    )
-    set_rule(
-        multiworld.get_location("Prison Break", player),
-        lambda state: state.can_reach("Chapter 5", "Region", player),
-    )
-
-    # ── Goal locations — all require Chapter 5 ────────────────────────────
-    for route in ("Route A Clear", "Route B Clear", "Route C Clear"):
-        if multiworld.get_location(route, player) is not None:
-            set_rule(
-                multiworld.get_location(route, player),
-                lambda state: state.can_reach("Chapter 5", "Region", player),
-            )

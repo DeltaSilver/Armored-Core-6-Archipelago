@@ -11,7 +11,9 @@ struct AC6Location {
 
 // The 86 core locations. Flag IDs match the Python locations.py table.
 static const AC6Location g_locations[] = {
-    // Story progression — Chapter 1
+    // Story progression — Chapter 1 (14) — verified NG/NG+/NG++; dead
+    // placeholders removed, real side-mission flags added. 3409 also fires
+    // SetGarageVisited (see flagwatcher.cpp). DLL cycles 3000-3999 per NG cycle.
     {3400, "Chapter 1 Progress 1"},
     {3401, "Chapter 1 Progress 2"},
     {3402, "Chapter 1 Progress 3"},
@@ -21,8 +23,12 @@ static const AC6Location g_locations[] = {
     {3406, "Chapter 1 Progress 7"},
     {3407, "Chapter 1 Progress 8"},
     {3408, "Chapter 1 Progress 9"},
-    {3409, "Chapter 1 First Garage Visit"},
-    // Story progression — Chapter 2
+    {3409, "Chapter 1 Progress 10"},
+    {3450, "Chapter 1 Progress 11"},
+    {3451, "Chapter 1 Progress 12"},
+    {3452, "Chapter 1 Progress 13"},
+    {3453, "Chapter 1 Progress 14"},
+    // Story progression — Chapter 2 (3 fire; 3413-3419 branch-reserved)
     {3410, "Chapter 2 Progress 1"},
     {3411, "Chapter 2 Progress 2"},
     {3412, "Chapter 2 Progress 3"},
@@ -33,7 +39,7 @@ static const AC6Location g_locations[] = {
     {3417, "Chapter 2 Progress 8"},
     {3418, "Chapter 2 Progress 9"},
     {3419, "Chapter 2 Progress 10"},
-    // Story progression — Chapter 3
+    // Story progression — Chapter 3 (17)
     {3420, "Chapter 3 Progress 1"},
     {3421, "Chapter 3 Progress 2"},
     {3422, "Chapter 3 Progress 3"},
@@ -44,7 +50,14 @@ static const AC6Location g_locations[] = {
     {3427, "Chapter 3 Progress 8"},
     {3428, "Chapter 3 Progress 9"},
     {3429, "Chapter 3 Progress 10"},
-    // Story progression — Chapter 4
+    {3460, "Chapter 3 Progress 11"},
+    {3461, "Chapter 3 Progress 12"},
+    {3462, "Chapter 3 Progress 13"},
+    {3463, "Chapter 3 Progress 14"},
+    {3464, "Chapter 3 Progress 15"},
+    {3465, "Chapter 3 Progress 16"},
+    {3466, "Chapter 3 Progress 17"},
+    // Story progression — Chapter 4 (7 fire; 3437-3439 branch-reserved)
     {3430, "Chapter 4 Progress 1"},
     {3431, "Chapter 4 Progress 2"},
     {3432, "Chapter 4 Progress 3"},
@@ -55,7 +68,7 @@ static const AC6Location g_locations[] = {
     {3437, "Chapter 4 Progress 8"},
     {3438, "Chapter 4 Progress 9"},
     {3439, "Chapter 4 Progress 10"},
-    // Story progression — Chapter 5
+    // Story progression — Chapter 5 (5 fire; 3444-3446 branch-reserved)
     {3440, "Chapter 5 Progress 1"},
     {3441, "Chapter 5 Progress 2"},
     {3442, "Chapter 5 Progress 3"},
@@ -63,13 +76,17 @@ static const AC6Location g_locations[] = {
     {3444, "Chapter 5 Progress 5"},
     {3445, "Chapter 5 Progress 6"},
     {3446, "Chapter 5 Progress 7"},
-    // Key missions
+    {3447, "Chapter 5 Progress 8"},
+    // Key missions (one-time; persist across NG cycles)
     {6200, "Chapter 1 Submission"},
     {6210, "Mining Ship and Dam Destruction"},
     {6220, "Over the Wall"},
     {6230, "Coordinates Indicated by the String"},
     {6240, "Continental Crust"},
+    {6245, "Old Spaceport Operation"},
     {6250, "Defeat Iceworm"},
+    {6275, "Coral Export Denial"},
+    {6280, "Coral Convergence"},
     {6260, "Prison Break"},
     // Mercenary ranks
     {6401, "Reach Mercenary Rank 1"},
@@ -166,3 +183,17 @@ sizeof(g_goalFlags) / sizeof(g_goalFlags[0]);
 // needs to know the multiplier value.
 #define AC6_MULTIPLIER_OFFSET 500000
 #define AC6_MAX_MULTIPLIER    4
+
+// New Game cycle offset. Story/mission flags reset and re-fire each NG cycle,
+// so the DLL offsets their location IDs by cycle (0=NG, 1=NG+, 2=NG++) to keep
+// each cycle's checks distinct. Must exceed the full multiplier span
+// (MAX_MULTIPLIER * MULTIPLIER_OFFSET = 2000000) so cycle blocks never overlap.
+// Must match CYCLE_OFFSET in the Python locations.py.
+#define AC6_CYCLE_OFFSET 2000000
+
+// True for flags that reset and re-fire each NG cycle (story/mission progress
+// flags, 3000-3999). Arena (6050+), merc ranks (6400+), key missions (6200+),
+// endings, and archives (4000+) persist across cycles and are NOT cycle-offset.
+static inline bool AC6_IsCycledFlag(uint32_t flag) {
+    return flag >= 3000 && flag <= 3999;
+}

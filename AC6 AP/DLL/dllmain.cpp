@@ -17,6 +17,7 @@
 #include "flagwatcher.h"
 #include "apclient.h"
 #include "partnames.h"
+#include "allparts.h"
 
 #define AC6AP_VERSION "v0.1.3-Beta"
 
@@ -47,6 +48,9 @@ struct AC6Config {
     std::string port = "38281";
     std::string slot = "Player1";
     std::string password = "";
+    bool        discover = false;       // discovery mode: log flag flips, no AP checks
+    std::string discoverRanges = "";    // "a-b,c-d"; empty = sensible default
+    bool        grantAllParts = false;  // enable F7 hotkey to unlock every part
 };
 
 static std::string Trim(const std::string& s) {
@@ -70,10 +74,18 @@ static AC6Config LoadConfig(const std::string& path) {
                 << "#   port     = room port number\n"
                 << "#   slot     = your slot name, exactly as in your YAML\n"
                 << "#   password = room password, or leave blank\n"
+                << "#   discover = set to 1 to log every flag that flips to\n"
+                << "#              ac6ap_discovery.txt instead of sending AP checks\n"
+                << "#              (used to map missions -> trigger flags). Leave 0 to play.\n"
                 << "host=localhost\n"
                 << "port=38281\n"
                 << "slot=Player1\n"
-                << "password=\n";
+                << "password=\n"
+                << "discover=0\n"
+                << "#discover_ranges=3000-3500,4000-4100,6000-6500\n"
+                << "#   grant_all_parts = set to 1 to enable the F7 hotkey:\n"
+                << "#              press F7 while at the garage to unlock every part\n"
+                << "grant_all_parts=0\n";
         }
         return cfg;  // defaults
     }
@@ -90,6 +102,9 @@ static AC6Config LoadConfig(const std::string& path) {
         else if (key == "port")     cfg.port = val;
         else if (key == "slot")     cfg.slot = val;
         else if (key == "password") cfg.password = val;
+        else if (key == "discover")        cfg.discover = (val == "1" || val == "true");
+        else if (key == "discover_ranges") cfg.discoverRanges = val;
+        else if (key == "grant_all_parts") cfg.grantAllParts = (val == "1" || val == "true");
     }
     Log("Config loaded: host=%s port=%s slot=%s",
         cfg.host.c_str(), cfg.port.c_str(), cfg.slot.c_str());
@@ -238,6 +253,36 @@ static void GrantDrainThread(void*) {
 }
 
 // ===========================================================================
+//  Grant-all-parts hotkey (F7) — fills the garage with every part.
+//  Opt-in via grant_all_parts=1. Press F7 while at the garage/assembly menu
+//  so the game is in a safe state to receive items. Works in discovery mode.
+// ===========================================================================
+
+static void GrantAllPartsThread(void*) {
+    Log("Grant-all-parts: press F7 at the garage to unlock all %d parts.",
+        g_allPartsCount);
+    bool last = false;
+    while (true) {
+        bool pressed = (GetAsyncKeyState(VK_F7) & 0x8000) != 0;
+        if (pressed && !last) {
+            if (!g_AddItem) {
+                Log("F7: AddItem not ready yet — load into the garage first.");
+            } else {
+                Log("F7 pressed — granting all %d parts...", g_allPartsCount);
+                for (int i = 0; i < g_allPartsCount; i++) {
+                    GrantItem(g_allParts[i], 1);
+                    Sleep(40);   // space them out so the game keeps up
+                }
+                Log("F7: finished granting all parts. Back out and re-enter the "
+                    "assembly menu if they don't show immediately.");
+            }
+        }
+        last = pressed;
+        Sleep(50);
+    }
+}
+
+// ===========================================================================
 //  Main worker thread
 // ===========================================================================
 
@@ -289,6 +334,21 @@ static void MainThread(void*) {
 
     // Load connection settings from ac6ap.cfg, then connect.
     AC6Config cfg = LoadConfig(GetDllDir() + "ac6ap.cfg");
+
+    // Optional: F7 hotkey to unlock the whole garage (works in any mode).
+    if (cfg.grantAllParts) {
+        _beginthread(GrantAllPartsThread, 0, nullptr);
+    }
+
+    // Discovery mode: don't touch Archipelago at all — just log flag flips so we
+    // can map missions -> trigger flags in one playthrough.
+    if (cfg.discover) {
+        Log("discover=1 — running flag discovery (no AP connection / no checks).");
+        FlagWatcher_StartDiscovery(eventFlagMan, cfg.discoverRanges.c_str());
+        Log("Setup complete. Discovery logging to ac6ap_discovery.txt.");
+        while (true) Sleep(1000);
+        return;
+    }
 
     std::string scheme = (cfg.host.find("archipelago.gg") != std::string::npos)
         ? "wss://" : "ws://";

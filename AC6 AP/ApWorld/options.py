@@ -28,22 +28,29 @@ class MissionRewardMultiplier(Choice):
     default = 2
 
 
-class Goal(Choice):
+class RunMode(Choice):
     """
-    Which ending counts as goal completion.
+    How many New Game cycles the run spans, and whether each cycle has its own
+    checks. (AC6's story flags reset every NG cycle, so the same missions can be
+    replayed in NG+ and NG++.)
 
-    any_ending:   completing Route A, B, or C all count as victory.
-    route_a:      only the Fires of Ibis ending counts.
-    route_b:      only the Liberator of Rubicon ending counts.
-    route_c:      only the Alea Iacta Est ending counts.
-    all_endings:  all three routes must be completed (NG++ required).
+    single:             one playthrough; reaching any ending completes the goal.
+                        Only the NG mission checks exist.
+    ng_plus_run:        play NG -> NG+ (both of the first two endings) to
+                        complete the goal; each mission's check fires only ONCE.
+    ng_plus_run_cycled: play NG -> NG+; every mission fires a SEPARATE check in
+                        each cycle (~2x the story checks).
+    full_run:           play NG -> NG+ -> NG++ (all three endings) to complete
+                        the goal; each mission's check fires only ONCE.
+    full_run_cycled:    play NG -> NG+ -> NG++; every mission fires a SEPARATE
+                        check in each cycle (~3x the story checks).
     """
-    display_name = "Goal"
-    option_any_ending  = 0
-    option_route_a     = 1
-    option_route_b     = 2
-    option_route_c     = 3
-    option_all_endings = 4
+    display_name = "Run Mode"
+    option_single             = 0
+    option_ng_plus_run        = 1
+    option_ng_plus_run_cycled = 2
+    option_full_run           = 3
+    option_full_run_cycled    = 4
     default = 0
 
 
@@ -51,4 +58,4 @@ class Goal(Choice):
 class AC6Options(PerGameCommonOptions):
     archive_logs:               ArchiveLogs
     mission_reward_multiplier:  MissionRewardMultiplier
-    goal:                       Goal
+    run_mode:                   RunMode

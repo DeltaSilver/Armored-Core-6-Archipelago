@@ -84,6 +84,75 @@ static void SaveReceiveState() {
 }
 
 // ===========================================================================
+//  New Game cycle persistence (NG / NG+ / NG++)
+// ===========================================================================
+
+#define AC6_NUM_CYCLES 3   // NG, NG+, NG++
+
+static int g_ngCycle = 0;
+
+static std::string GetCyclePath() {
+    return GetDllDir() + "ac6ap_cycle_"
+        + g_seedName + "_" + std::to_string(g_slotNumber) + ".txt";
+}
+
+static void LoadCycle() {
+    g_ngCycle = 0;
+    std::ifstream f(GetCyclePath());
+    if (f.is_open()) { f >> g_ngCycle; f.close(); }
+    if (g_ngCycle < 0) g_ngCycle = 0;
+    if (g_ngCycle > AC6_NUM_CYCLES - 1) g_ngCycle = AC6_NUM_CYCLES - 1;
+    Log("NG cycle loaded: %d (0=NG 1=NG+ 2=NG++)", g_ngCycle);
+}
+
+static void SaveCycle() {
+    std::ofstream f(GetCyclePath(), std::ios::trunc);
+    if (f.is_open()) { f << g_ngCycle; f.close(); }
+}
+
+int APClient_GetCycle() {
+    return g_ngCycle;
+}
+
+// Run mode from slot_data: 0 single, 1 ng_plus_run, 2 ng_plus_run_cycled,
+// 3 full_run, 4 full_run_cycled.
+static int g_runMode = 0;
+
+// How many NG cycles this mode spans (single=1, ng_plus_*=2, full_*=3).
+static int CyclesForMode(int mode) {
+    switch (mode) {
+        case 1: case 2: return 2;   // ng_plus runs
+        case 3: case 4: return 3;   // full runs
+        default:        return 1;   // single (0) / unknown
+    }
+}
+
+// The "_cycled" modes (2, 4) duplicate checks per cycle, so only they advance
+// the cycle counter. The others keep cycle 0 and dedupe re-fires server-side.
+static bool IsCycledMode(int mode) { return mode == 2 || mode == 4; }
+
+int APClient_GetRunMode() {
+    return g_runMode;
+}
+
+int APClient_GetRequiredEndings() {
+    return CyclesForMode(g_runMode);
+}
+
+void APClient_AdvanceCycle() {
+    if (!IsCycledMode(g_runMode)) return;
+    int maxCycle = CyclesForMode(g_runMode) - 1;   // 1 for ng_plus, 2 for full
+    if (g_ngCycle >= maxCycle) {
+        Log("AdvanceCycle: at max cycle (%d) for mode %d, not advancing",
+            g_ngCycle, g_runMode);
+        return;
+    }
+    g_ngCycle++;
+    SaveCycle();
+    Log("NG cycle advanced to %d (0=NG 1=NG+ 2=NG++)", g_ngCycle);
+}
+
+// ===========================================================================
 //  Outgoing messages
 // ===========================================================================
 
@@ -189,7 +258,14 @@ static void HandleMessage(const std::string& msg) {
         size_t t = 0; long long slot = -1;
         ExtractNextInt(msg, "slot", t, slot);   // top-level slot precedes players[]
         g_slotNumber = (int)slot;
+
+        // Run mode from slot_data (default single=0 if absent).
+        size_t rm = 0; long long mode = 0;
+        if (ExtractNextInt(msg, "run_mode", rm, mode)) g_runMode = (int)mode;
+        Log("Run mode: %d (0=single 1=full 2=full-cycled)", g_runMode);
+
         LoadReceiveState();
+        LoadCycle();
     }
 
     // ReceivedItems -> grant

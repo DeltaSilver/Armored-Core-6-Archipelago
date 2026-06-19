@@ -21,70 +21,93 @@ def _loc(flag_id: int, region: str) -> AC6LocationData:
 # ---------------------------------------------------------------------------
 LOCATION_TABLE: dict[str, AC6LocationData] = {
 
-    # -- Story progression (Chapter 1) --
-    "Chapter 1 Progress 1":           _loc(3400, "Chapter 1"),
-    "Chapter 1 Progress 2":           _loc(3401, "Chapter 1"),
-    "Chapter 1 Progress 3":           _loc(3402, "Chapter 1"),
-    "Chapter 1 Progress 4":           _loc(3403, "Chapter 1"),
-    "Chapter 1 Progress 5":           _loc(3404, "Chapter 1"),
-    "Chapter 1 Progress 6":           _loc(3405, "Chapter 1"),
-    "Chapter 1 Progress 7":           _loc(3406, "Chapter 1"),
-    "Chapter 1 Progress 8":           _loc(3407, "Chapter 1"),
-    "Chapter 1 Progress 9":           _loc(3408, "Chapter 1"),
-    "Chapter 1 First Garage Visit":   _loc(3409, "Chapter 1"),
+    # -- Story progression (Chapters 1-5) --
+    # Per-mission COMPLETION COUNTER flags: one ticks up per mission cleared in
+    # that chapter (in play order). VERIFIED by full NG / NG+ / NG++ discovery
+    # playthroughs (ac6datamine/FLAG_REFERENCE.md) — exactly these flags fire.
+    # Dead placeholders 3413-3419, 3437-3439, 3444-3446 removed; real
+    # side-mission flags 3447 and 3450-3466 added. Per-chapter counts genuinely
+    # vary (Chapter 2 is only 3). The DLL cycles these per NG cycle (3000-3999).
+    # Flag 3409 also triggers "first garage visit" (handled in the DLL).
+    # Chapter 1 (14)
+    "Chapter 1 Progress 1":   _loc(3400, "Chapter 1"),
+    "Chapter 1 Progress 2":   _loc(3401, "Chapter 1"),
+    "Chapter 1 Progress 3":   _loc(3402, "Chapter 1"),
+    "Chapter 1 Progress 4":   _loc(3403, "Chapter 1"),
+    "Chapter 1 Progress 5":   _loc(3404, "Chapter 1"),
+    "Chapter 1 Progress 6":   _loc(3405, "Chapter 1"),
+    "Chapter 1 Progress 7":   _loc(3406, "Chapter 1"),
+    "Chapter 1 Progress 8":   _loc(3407, "Chapter 1"),
+    "Chapter 1 Progress 9":   _loc(3408, "Chapter 1"),
+    "Chapter 1 Progress 10":  _loc(3409, "Chapter 1"),
+    "Chapter 1 Progress 11":  _loc(3450, "Chapter 1"),
+    "Chapter 1 Progress 12":  _loc(3451, "Chapter 1"),
+    "Chapter 1 Progress 13":  _loc(3452, "Chapter 1"),
+    "Chapter 1 Progress 14":  _loc(3453, "Chapter 1"),
+    # Chapter 2 (3 fire on the main path; 3413-3419 are branch/route-exclusive
+    # missions, referenced in the mission controller — fire if you take them)
+    "Chapter 2 Progress 1":   _loc(3410, "Chapter 2"),
+    "Chapter 2 Progress 2":   _loc(3411, "Chapter 2"),
+    "Chapter 2 Progress 3":   _loc(3412, "Chapter 2"),
+    "Chapter 2 Progress 4":   _loc(3413, "Chapter 2"),
+    "Chapter 2 Progress 5":   _loc(3414, "Chapter 2"),
+    "Chapter 2 Progress 6":   _loc(3415, "Chapter 2"),
+    "Chapter 2 Progress 7":   _loc(3416, "Chapter 2"),
+    "Chapter 2 Progress 8":   _loc(3417, "Chapter 2"),
+    "Chapter 2 Progress 9":   _loc(3418, "Chapter 2"),
+    "Chapter 2 Progress 10":  _loc(3419, "Chapter 2"),
+    # Chapter 3 (17)
+    "Chapter 3 Progress 1":   _loc(3420, "Chapter 3"),
+    "Chapter 3 Progress 2":   _loc(3421, "Chapter 3"),
+    "Chapter 3 Progress 3":   _loc(3422, "Chapter 3"),
+    "Chapter 3 Progress 4":   _loc(3423, "Chapter 3"),
+    "Chapter 3 Progress 5":   _loc(3424, "Chapter 3"),
+    "Chapter 3 Progress 6":   _loc(3425, "Chapter 3"),
+    "Chapter 3 Progress 7":   _loc(3426, "Chapter 3"),
+    "Chapter 3 Progress 8":   _loc(3427, "Chapter 3"),
+    "Chapter 3 Progress 9":   _loc(3428, "Chapter 3"),
+    "Chapter 3 Progress 10":  _loc(3429, "Chapter 3"),
+    "Chapter 3 Progress 11":  _loc(3460, "Chapter 3"),
+    "Chapter 3 Progress 12":  _loc(3461, "Chapter 3"),
+    "Chapter 3 Progress 13":  _loc(3462, "Chapter 3"),
+    "Chapter 3 Progress 14":  _loc(3463, "Chapter 3"),
+    "Chapter 3 Progress 15":  _loc(3464, "Chapter 3"),
+    "Chapter 3 Progress 16":  _loc(3465, "Chapter 3"),
+    "Chapter 3 Progress 17":  _loc(3466, "Chapter 3"),
+    # Chapter 4 (7 fire; 3437-3439 branch-reserved)
+    "Chapter 4 Progress 1":   _loc(3430, "Chapter 4"),
+    "Chapter 4 Progress 2":   _loc(3431, "Chapter 4"),
+    "Chapter 4 Progress 3":   _loc(3432, "Chapter 4"),
+    "Chapter 4 Progress 4":   _loc(3433, "Chapter 4"),
+    "Chapter 4 Progress 5":   _loc(3434, "Chapter 4"),
+    "Chapter 4 Progress 6":   _loc(3435, "Chapter 4"),
+    "Chapter 4 Progress 7":   _loc(3436, "Chapter 4"),
+    "Chapter 4 Progress 8":   _loc(3437, "Chapter 4"),
+    "Chapter 4 Progress 9":   _loc(3438, "Chapter 4"),
+    "Chapter 4 Progress 10":  _loc(3439, "Chapter 4"),
+    # Chapter 5 (5 fire; 3444-3446 branch-reserved)
+    "Chapter 5 Progress 1":   _loc(3440, "Chapter 5"),
+    "Chapter 5 Progress 2":   _loc(3441, "Chapter 5"),
+    "Chapter 5 Progress 3":   _loc(3442, "Chapter 5"),
+    "Chapter 5 Progress 4":   _loc(3443, "Chapter 5"),
+    "Chapter 5 Progress 5":   _loc(3444, "Chapter 5"),
+    "Chapter 5 Progress 6":   _loc(3445, "Chapter 5"),
+    "Chapter 5 Progress 7":   _loc(3446, "Chapter 5"),
+    "Chapter 5 Progress 8":   _loc(3447, "Chapter 5"),
 
-    # -- Story progression (Chapter 2) --
-    "Chapter 2 Progress 1":           _loc(3410, "Chapter 2"),
-    "Chapter 2 Progress 2":           _loc(3411, "Chapter 2"),
-    "Chapter 2 Progress 3":           _loc(3412, "Chapter 2"),
-    "Chapter 2 Progress 4":           _loc(3413, "Chapter 2"),
-    "Chapter 2 Progress 5":           _loc(3414, "Chapter 2"),
-    "Chapter 2 Progress 6":           _loc(3415, "Chapter 2"),
-    "Chapter 2 Progress 7":           _loc(3416, "Chapter 2"),
-    "Chapter 2 Progress 8":           _loc(3417, "Chapter 2"),
-    "Chapter 2 Progress 9":           _loc(3418, "Chapter 2"),
-    "Chapter 2 Progress 10":          _loc(3419, "Chapter 2"),
-
-    # -- Story progression (Chapter 3) --
-    "Chapter 3 Progress 1":           _loc(3420, "Chapter 3"),
-    "Chapter 3 Progress 2":           _loc(3421, "Chapter 3"),
-    "Chapter 3 Progress 3":           _loc(3422, "Chapter 3"),
-    "Chapter 3 Progress 4":           _loc(3423, "Chapter 3"),
-    "Chapter 3 Progress 5":           _loc(3424, "Chapter 3"),
-    "Chapter 3 Progress 6":           _loc(3425, "Chapter 3"),
-    "Chapter 3 Progress 7":           _loc(3426, "Chapter 3"),
-    "Chapter 3 Progress 8":           _loc(3427, "Chapter 3"),
-    "Chapter 3 Progress 9":           _loc(3428, "Chapter 3"),
-    "Chapter 3 Progress 10":          _loc(3429, "Chapter 3"),
-
-    # -- Story progression (Chapter 4) --
-    "Chapter 4 Progress 1":           _loc(3430, "Chapter 4"),
-    "Chapter 4 Progress 2":           _loc(3431, "Chapter 4"),
-    "Chapter 4 Progress 3":           _loc(3432, "Chapter 4"),
-    "Chapter 4 Progress 4":           _loc(3433, "Chapter 4"),
-    "Chapter 4 Progress 5":           _loc(3434, "Chapter 4"),
-    "Chapter 4 Progress 6":           _loc(3435, "Chapter 4"),
-    "Chapter 4 Progress 7":           _loc(3436, "Chapter 4"),
-    "Chapter 4 Progress 8":           _loc(3437, "Chapter 4"),
-    "Chapter 4 Progress 9":           _loc(3438, "Chapter 4"),
-    "Chapter 4 Progress 10":          _loc(3439, "Chapter 4"),
-
-    # -- Story progression (Chapter 5) --
-    "Chapter 5 Progress 1":           _loc(3440, "Chapter 5"),
-    "Chapter 5 Progress 2":           _loc(3441, "Chapter 5"),
-    "Chapter 5 Progress 3":           _loc(3442, "Chapter 5"),
-    "Chapter 5 Progress 4":           _loc(3443, "Chapter 5"),
-    "Chapter 5 Progress 5":           _loc(3444, "Chapter 5"),
-    "Chapter 5 Progress 6":           _loc(3445, "Chapter 5"),
-    "Chapter 5 Progress 7":           _loc(3446, "Chapter 5"),
-
-    # -- Key missions --
+    # -- Key missions (one-time story milestones; persist across NG cycles) --
+    # Confirmed firing on these missions across the playthroughs. 6245/6275/6280
+    # are real flags the old table was missing; chapters corrected (6210/6220
+    # fire in Chapter 1, not 2).
     "Chapter 1 Submission":                  _loc(6200, "Chapter 1"),
-    "Mining Ship and Dam Destruction":       _loc(6210, "Chapter 2"),
-    "Over the Wall":                         _loc(6220, "Chapter 2"),
-    "Coordinates Indicated by the String":   _loc(6230, "Chapter 3"),
+    "Mining Ship and Dam Destruction":       _loc(6210, "Chapter 1"),
+    "Over the Wall":                         _loc(6220, "Chapter 1"),
+    "Coordinates Indicated by the String":   _loc(6230, "Chapter 2"),
     "Continental Crust":                     _loc(6240, "Chapter 3"),
-    "Defeat Iceworm":                        _loc(6250, "Chapter 4"),
+    "Old Spaceport Operation":               _loc(6245, "Chapter 3"),
+    "Defeat Iceworm":                        _loc(6250, "Chapter 3"),
+    "Coral Export Denial":                   _loc(6275, "Chapter 3"),
+    "Coral Convergence":                     _loc(6280, "Chapter 4"),
     "Prison Break":                          _loc(6260, "Chapter 5"),
 
     # -- Mercenary ranks --
@@ -165,6 +188,50 @@ def all_multiplier_locations() -> dict[str, AC6LocationData]:
     regardless of which multiplier a given player picks.
     """
     return make_multiplier_locations(MAX_MULTIPLIER)
+
+
+# ---------------------------------------------------------------------------
+# New Game cycle (NG / NG+ / NG++)
+#
+# Story/mission progress flags reset and re-fire on every NG cycle, so each
+# cycle gets its OWN set of checks for the same missions. The DLL offsets a
+# story flag's location ID by cycle * CYCLE_OFFSET (see AC6_CYCLE_OFFSET in the
+# C++ locations.h — the values MUST match). Persistent categories (key
+# missions, arena, ranks, archives) fire once and are not duplicated.
+#
+# Layout: location ID = BASE_LOC_ID + cycle*CYCLE_OFFSET + band*MULTIPLIER_OFFSET
+#                       + flag_id.  CYCLE_OFFSET exceeds the full multiplier span
+# (MAX_MULTIPLIER * MULTIPLIER_OFFSET = 2,000,000) so cycle blocks never collide.
+# ---------------------------------------------------------------------------
+CYCLE_OFFSET = 2_000_000          # MUST match AC6_CYCLE_OFFSET in the DLL
+NUM_CYCLES = 3
+CYCLE_NAMES = {0: "NG", 1: "NG+", 2: "NG++"}
+
+
+def is_cycled_flag(flag_id: int) -> bool:
+    """Story/mission flags (3000-3999) reset each NG cycle; everything else
+    persists and is checked only once."""
+    return 3000 <= flag_id <= 3999
+
+
+def add_cycles(table: dict[str, AC6LocationData],
+               num_cycles: int = NUM_CYCLES) -> dict[str, AC6LocationData]:
+    """Expand a (band-expanded) cycle-0 table with extra-cycle copies of every
+    cycled (story) location, up to num_cycles total. Cycle 0 (NG) entries keep
+    their names/regions; later-cycle copies are offset by cycle*CYCLE_OFFSET,
+    suffixed, and tagged into per-cycle regions ('NG+ Chapter 1', ...). Non-
+    cycled locations pass through. Use num_cycles=NUM_CYCLES for the full
+    datapackage registration; pass the active run's cycle count otherwise.
+    """
+    out: dict[str, AC6LocationData] = {}
+    for name, d in table.items():
+        out[name] = d  # cycle 0 (NG) — unchanged
+        if is_cycled_flag(d.flag_id):
+            for cyc in range(1, num_cycles):
+                out[f"{name} ({CYCLE_NAMES[cyc]})"] = AC6LocationData(
+                    d.code + cyc * CYCLE_OFFSET, d.flag_id,
+                    f"{CYCLE_NAMES[cyc]} {d.region}")
+    return out
 
 
 # ---------------------------------------------------------------------------

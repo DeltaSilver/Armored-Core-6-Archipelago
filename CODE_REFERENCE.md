@@ -1,4 +1,4 @@
-# Armored Core 6 Archipelago — Code Reference
+# Armored Core 6 Archipelago - Code Reference
 
 How the mod is put together: what the DLL reads from the running game, how it
 talks to the Archipelago server, and how the AP world maps to it. Intended as a
@@ -23,7 +23,7 @@ Two halves talk to each other over a standard Archipelago connection:
 - **`ac6ap.dll`** (source in [`build/`](build)) runs inside the game. It watches
   in-game **event flags** to detect progress and sends location checks, and it
   **grants AC parts** the player receives by calling the game's own add-item
-  function. It does not modify game code — it reads memory and calls one function.
+  function. It does not modify game code - it reads memory and calls one function.
 - **`worlds/armored_core_6`** is the Python AP world. It defines the item pool,
   the location IDs, the regions/rules, and the slot options. It never touches the
   game directly.
@@ -53,12 +53,12 @@ runtime). This is the single primitive the whole mod is built on.
 The flag the mod watches are listed in `build/locations.h` (`g_locations`) and
 documented in [`FLAG_REFERENCE.md`](FLAG_REFERENCE.md). Categories:
 
-- **`3000`–`3999` — story / mission flags (cycled).** A per-mission completion
+- **`3000`-`3999` - story / mission flags (cycled).** A per-mission completion
   counter per chapter. These **reset every NG cycle**, so the DLL treats them
   specially (see *NG cycles* below). `AC6_IsCycledFlag()` is the test.
-- **`6050`–`6056` arena, `6200`–`6280` key missions, `6401`–`6417` merc ranks —
+- **`6050`-`6056` arena, `6200`-`6280` key missions, `6401`-`6417` merc ranks -
   one-time.** They persist across NG cycles and fire once.
-- **`6000`/`6001`/`6002` — endings A / B / C.** Used for goal detection; they
+- **`6000`/`6001`/`6002` - endings A / B / C.** Used for goal detection; they
   accumulate (persist), so "N endings reached" = count of these that are set.
 
 ### Granting items
@@ -93,11 +93,11 @@ location_id = BASE_LOC_ID + cycle*CYCLE_OFFSET + band*MULTIPLIER_OFFSET + flagId
               7700000        ×2,000,000          ×500,000
 ```
 
-- **flagId** — the in-game event flag (`AC6_BASE_ID = 7700000` in the DLL).
-- **band** — multiplier reward copy (0–3). The DLL always sends every band; the
+- **flagId** - the in-game event flag (`AC6_BASE_ID = 7700000` in the DLL).
+- **band** - multiplier reward copy (0-3). The DLL always sends every band; the
   server keeps only the ones the seed generated, so the DLL never needs to know
   the multiplier.
-- **cycle** — NG cycle (0/1/2). Only applied to cycled (story) flags, so each NG
+- **cycle** - NG cycle (0/1/2). Only applied to cycled (story) flags, so each NG
   cycle's mission checks get distinct IDs.
 
 ### slot_data the DLL reads
@@ -116,12 +116,12 @@ from it. The goal fires once `>=` that many of `{6000,6001,6002}` are set.
 Because story flags reset each cycle, the same flag fires in NG, NG+, and NG++
 for different missions. The DLL keeps them distinct:
 
-1. **Detection** — `flagwatcher.cpp` watches already-sent story flags; when ≥ 8
+1. **Detection** - `flagwatcher.cpp` watches already-sent story flags; when ≥ 8
    of them clear in one poll (the NG+ wipe), it calls `APClient_AdvanceCycle()`
    and forgets the story flags so they re-send as the next cycle's checks.
-2. **Persistence** — the cycle is saved to `ac6ap_cycle_<seed>_<slot>.txt` and
+2. **Persistence** - the cycle is saved to `ac6ap_cycle_<seed>_<slot>.txt` and
    reloaded on connect, so a restart mid-NG++ stays on the right cycle.
-3. **Offset** — cycled checks add `cycle * AC6_CYCLE_OFFSET` to the location ID.
+3. **Offset** - cycled checks add `cycle * AC6_CYCLE_OFFSET` to the location ID.
 
 Only the `*_cycled` run modes advance the cycle; the others stay at cycle 0 and
 let NG+/NG++ re-fires dedupe server-side.

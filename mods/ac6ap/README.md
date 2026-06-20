@@ -1,4 +1,4 @@
-# ac6ap — ModEngine2 mod folder
+# ac6ap - ModEngine2 mod folder
 
 Copy the contents of this folder into your ModEngine2 `mod/` directory, then
 register `ac6ap.dll` in `config_armoredcore6.toml` (`external_dlls = ["mod/ac6ap.dll"]`).
@@ -8,10 +8,10 @@ added yourself:
 
 | File | Where it comes from |
 |------|---------------------|
-| `ac6ap.dll` | Build it from [`../../build/`](../../build) — see [`build/BUILDING.md`](../../build/BUILDING.md) — then drop the compiled DLL here. |
+| `ac6ap.dll` | Build it from [`../../build/`](../../build) - see [`build/BUILDING.md`](../../build/BUILDING.md) - then drop the compiled DLL here. |
 | `regulation.bin` | The modded regulation from the mod release (it adjusts the part economy so parts come from Archipelago). Not needed for `discover=1` data-gathering runs. |
 
-`ac6ap.cfg` is your connection config — edit it with your room details. If it's
+`ac6ap.cfg` is your connection config - edit it with your room details. If it's
 missing, the DLL writes a default one here on first launch.
 
 Runtime files the DLL writes here (all gitignored): `ac6ap_log.txt`,

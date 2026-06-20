@@ -91,6 +91,11 @@ The item pool is the AC parts catalogue (~314 parts), shuffled across the
 multiworld. Filler is `COAM x10000`. Received parts appear in the assembly menu
 (back out and re-enter if one doesn't show immediately).
 
+Multi-cycle modes also add small `NG+ Access` / `NG++ Access` progression items.
+These are logic gates only (the mod never grants anything for them in-game); they
+keep the multiworld from placing other games' early items behind your NG+/NG++
+checks. You do not configure them - they are added automatically.
+
 `mission_reward_multiplier` (1×-4×) controls how many item checks each
 objective awards.
 

@@ -126,6 +126,18 @@ for different missions. The DLL keeps them distinct:
 Only the `*_cycled` run modes advance the cycle; the others stay at cycle 0 and
 let NG+/NG++ re-fires dedupe server-side.
 
+### Cycle gating (multiworld balance)
+
+Within a cycle AC6 has no item-based gates, so on its own the region chain would
+leave every NG+/NG++ check reachable from logic sphere 0. In a multiworld that is
+a problem: the solver could place another game's early-critical progression
+behind your NG++ finale. To prevent that, each extra cycle a run mode uses adds a
+progression item - `NG+ Access` and `NG++ Access` - and `rules.py` gates the
+cycle-transition entrances on them, so later-cycle checks are genuinely later in
+logic. These two items use sentinel offsets (`BASE_ID + 2` / `+ 3`); the DLL
+recognises them in `OnItemReceived` and does **not** grant anything in-game (they
+exist only as logic gates). They are auto-managed - players never set them.
+
 ---
 
 ## Files the DLL writes (mod folder)

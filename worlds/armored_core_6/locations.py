@@ -11,6 +11,16 @@ class AC6LocationData:
 # Base ID for all AC6 locations — must not overlap with item BASE_ID.
 BASE_LOC_ID = 7700000
 
+# Story counter flags that never fired on any tested route (NG/NG+/NG++) — they
+# are referenced in the mission controller for branch choices not taken. Their
+# checks can therefore strand items, so they are excluded from progression in
+# every mode and omitted entirely from single-run seeds (see __init__.py).
+BRANCH_RESERVED_FLAGS = frozenset({
+    3413, 3414, 3415, 3416, 3417, 3418, 3419,   # Chapter 2
+    3437, 3438, 3439,                            # Chapter 4
+    3444, 3445, 3446,                            # Chapter 5
+})
+
 
 def _loc(flag_id: int, region: str) -> AC6LocationData:
     return AC6LocationData(BASE_LOC_ID + flag_id, flag_id, region)
@@ -22,78 +32,84 @@ def _loc(flag_id: int, region: str) -> AC6LocationData:
 LOCATION_TABLE: dict[str, AC6LocationData] = {
 
     # -- Story progression (Chapters 1-5) --
-    # Per-mission COMPLETION COUNTER flags: one ticks up per mission cleared in
-    # that chapter (in play order). VERIFIED by full NG / NG+ / NG++ discovery
-    # playthroughs (ac6datamine/FLAG_REFERENCE.md) — exactly these flags fire.
-    # Dead placeholders 3413-3419, 3437-3439, 3444-3446 removed; real
-    # side-mission flags 3447 and 3450-3466 added. Per-chapter counts genuinely
-    # vary (Chapter 2 is only 3). The DLL cycles these per NG cycle (3000-3999).
-    # Flag 3409 also triggers "first garage visit" (handled in the DLL).
-    # Chapter 1 (14)
-    "Chapter 1 Progress 1":   _loc(3400, "Chapter 1"),
-    "Chapter 1 Progress 2":   _loc(3401, "Chapter 1"),
-    "Chapter 1 Progress 3":   _loc(3402, "Chapter 1"),
-    "Chapter 1 Progress 4":   _loc(3403, "Chapter 1"),
-    "Chapter 1 Progress 5":   _loc(3404, "Chapter 1"),
-    "Chapter 1 Progress 6":   _loc(3405, "Chapter 1"),
-    "Chapter 1 Progress 7":   _loc(3406, "Chapter 1"),
-    "Chapter 1 Progress 8":   _loc(3407, "Chapter 1"),
-    "Chapter 1 Progress 9":   _loc(3408, "Chapter 1"),
-    "Chapter 1 Progress 10":  _loc(3409, "Chapter 1"),
-    "Chapter 1 Progress 11":  _loc(3450, "Chapter 1"),
-    "Chapter 1 Progress 12":  _loc(3451, "Chapter 1"),
-    "Chapter 1 Progress 13":  _loc(3452, "Chapter 1"),
-    "Chapter 1 Progress 14":  _loc(3453, "Chapter 1"),
-    # Chapter 2 (3 fire on the main path; 3413-3419 are branch/route-exclusive
-    # missions, referenced in the mission controller — fire if you take them)
-    "Chapter 2 Progress 1":   _loc(3410, "Chapter 2"),
-    "Chapter 2 Progress 2":   _loc(3411, "Chapter 2"),
-    "Chapter 2 Progress 3":   _loc(3412, "Chapter 2"),
-    "Chapter 2 Progress 4":   _loc(3413, "Chapter 2"),
-    "Chapter 2 Progress 5":   _loc(3414, "Chapter 2"),
-    "Chapter 2 Progress 6":   _loc(3415, "Chapter 2"),
-    "Chapter 2 Progress 7":   _loc(3416, "Chapter 2"),
-    "Chapter 2 Progress 8":   _loc(3417, "Chapter 2"),
-    "Chapter 2 Progress 9":   _loc(3418, "Chapter 2"),
-    "Chapter 2 Progress 10":  _loc(3419, "Chapter 2"),
-    # Chapter 3 (17)
-    "Chapter 3 Progress 1":   _loc(3420, "Chapter 3"),
-    "Chapter 3 Progress 2":   _loc(3421, "Chapter 3"),
-    "Chapter 3 Progress 3":   _loc(3422, "Chapter 3"),
-    "Chapter 3 Progress 4":   _loc(3423, "Chapter 3"),
-    "Chapter 3 Progress 5":   _loc(3424, "Chapter 3"),
-    "Chapter 3 Progress 6":   _loc(3425, "Chapter 3"),
-    "Chapter 3 Progress 7":   _loc(3426, "Chapter 3"),
-    "Chapter 3 Progress 8":   _loc(3427, "Chapter 3"),
-    "Chapter 3 Progress 9":   _loc(3428, "Chapter 3"),
-    "Chapter 3 Progress 10":  _loc(3429, "Chapter 3"),
-    "Chapter 3 Progress 11":  _loc(3460, "Chapter 3"),
-    "Chapter 3 Progress 12":  _loc(3461, "Chapter 3"),
-    "Chapter 3 Progress 13":  _loc(3462, "Chapter 3"),
-    "Chapter 3 Progress 14":  _loc(3463, "Chapter 3"),
-    "Chapter 3 Progress 15":  _loc(3464, "Chapter 3"),
-    "Chapter 3 Progress 16":  _loc(3465, "Chapter 3"),
-    "Chapter 3 Progress 17":  _loc(3466, "Chapter 3"),
-    # Chapter 4 (7 fire; 3437-3439 branch-reserved)
-    "Chapter 4 Progress 1":   _loc(3430, "Chapter 4"),
-    "Chapter 4 Progress 2":   _loc(3431, "Chapter 4"),
-    "Chapter 4 Progress 3":   _loc(3432, "Chapter 4"),
-    "Chapter 4 Progress 4":   _loc(3433, "Chapter 4"),
-    "Chapter 4 Progress 5":   _loc(3434, "Chapter 4"),
-    "Chapter 4 Progress 6":   _loc(3435, "Chapter 4"),
-    "Chapter 4 Progress 7":   _loc(3436, "Chapter 4"),
-    "Chapter 4 Progress 8":   _loc(3437, "Chapter 4"),
-    "Chapter 4 Progress 9":   _loc(3438, "Chapter 4"),
-    "Chapter 4 Progress 10":  _loc(3439, "Chapter 4"),
-    # Chapter 5 (5 fire; 3444-3446 branch-reserved)
-    "Chapter 5 Progress 1":   _loc(3440, "Chapter 5"),
-    "Chapter 5 Progress 2":   _loc(3441, "Chapter 5"),
-    "Chapter 5 Progress 3":   _loc(3442, "Chapter 5"),
-    "Chapter 5 Progress 4":   _loc(3443, "Chapter 5"),
-    "Chapter 5 Progress 5":   _loc(3444, "Chapter 5"),
-    "Chapter 5 Progress 6":   _loc(3445, "Chapter 5"),
-    "Chapter 5 Progress 7":   _loc(3446, "Chapter 5"),
-    "Chapter 5 Progress 8":   _loc(3447, "Chapter 5"),
+    # Mission names for the per-mission story COMPLETION-COUNTER flags. The 34xx
+    # flags are shared positional counters (one ticks per mission cleared, in
+    # play order), NOT fixed per-mission flags, so a name is the mission that
+    # occupies that slot on the normal route. Names were lined up from the three
+    # logged discovery playthroughs (NG / NG+ / NG++) cross-referenced with the
+    # datamined mission table; branch DECISION points are joined "A/B". Flags in
+    # BRANCH_RESERVED_FLAGS never fired on any tested route (reserved for other
+    # branch choices) and are trimmed from single-run seeds. flag 3409 also
+    # triggers the DLL's first-garage grant gate. The DLL keys off flag IDs, not
+    # names, so renaming a check here needs no DLL change.
+    # -- Chapter 1 --
+    "Illegal Entry":                                                       _loc(3400, "Chapter 1"),
+    "Destroy Artillery Installations":                                     _loc(3401, "Chapter 1"),
+    "Grid 135 Cleanup":                                                    _loc(3402, "Chapter 1"),
+    "Destroy the Transport Helicopters":                                   _loc(3403, "Chapter 1"),
+    "Destroy the Tester AC":                                               _loc(3404, "Chapter 1"),
+    "Attack the Dam Complex":                                              _loc(3405, "Chapter 1"),
+    "Destroy/Escort the Weaponized Mining Ship":                           _loc(3406, "Chapter 1"),
+    "Operation Wallclimber":                                               _loc(3407, "Chapter 1"),
+    "Retrieve Combat Logs":                                                _loc(3408, "Chapter 1"),
+    "Prisoner Rescue":                                                     _loc(3409, "Chapter 1"),
+    "Investigate BAWS Arsenal No. 2":                                      _loc(3450, "Chapter 1"),
+    "Obstruct the Mandatory Inspection":                                   _loc(3451, "Chapter 1"),
+    "Attack the Watchpoint":                                               _loc(3452, "Chapter 1"),
+    "Chapter 1 Side Operation 1":                                          _loc(3453, "Chapter 1"),
+
+    # -- Chapter 2 --
+    "Infiltrate Grid 086":                                                 _loc(3410, "Chapter 2"),
+    "Eliminate the Doser Faction/Stop the Secret Data Breach":             _loc(3411, "Chapter 2"),
+    "Ocean Crossing":                                                      _loc(3412, "Chapter 2"),
+    "Chapter 2 Side Operation 1":                                          _loc(3413, "Chapter 2"),
+    "Chapter 2 Side Operation 2":                                          _loc(3414, "Chapter 2"),
+    "Chapter 2 Side Operation 3":                                          _loc(3415, "Chapter 2"),
+    "Chapter 2 Side Operation 4":                                          _loc(3416, "Chapter 2"),
+    "Chapter 2 Side Operation 5":                                          _loc(3417, "Chapter 2"),
+    "Chapter 2 Side Operation 6":                                          _loc(3418, "Chapter 2"),
+    "Chapter 2 Side Operation 7":                                          _loc(3419, "Chapter 2"),
+
+    # -- Chapter 3 --
+    "Steal the Survey Data":                                               _loc(3420, "Chapter 3"),
+    "Attack the Refueling Base":                                           _loc(3421, "Chapter 3"),
+    "Eliminate V.VII":                                                     _loc(3422, "Chapter 3"),
+    "Tunnel Sabotage/Prevent Corporate Salvage of New Tech":               _loc(3423, "Chapter 3"),
+    "Survey the Uninhabited Floating City":                                _loc(3424, "Chapter 3"),
+    "Heavy Missile Launch Support":                                        _loc(3425, "Chapter 3"),
+    "Eliminate the Enforcement Squads/Destroy the Special Forces Craft":   _loc(3426, "Chapter 3"),
+    "Attack the Old Spaceport":                                            _loc(3427, "Chapter 3"),
+    "Eliminate Honest Brute":                                              _loc(3428, "Chapter 3"),
+    "Defend the Old Spaceport/Defend the Dam Complex":                     _loc(3429, "Chapter 3"),
+    "Historic Data Recovery":                                              _loc(3460, "Chapter 3"),
+    "Coral Export Denial (Sortie)":                                        _loc(3461, "Chapter 3"),
+    "Destroy the Ice Worm":                                                _loc(3462, "Chapter 3"),
+    "Chapter 3 Side Operation 1":                                          _loc(3463, "Chapter 3"),
+    "Chapter 3 Side Operation 2":                                          _loc(3464, "Chapter 3"),
+    "Chapter 3 Side Operation 3":                                          _loc(3465, "Chapter 3"),
+    "Chapter 3 Side Operation 4":                                          _loc(3466, "Chapter 3"),
+
+    # -- Chapter 4 --
+    "Underground Exploration - Depth 1":                                   _loc(3430, "Chapter 4"),
+    "Underground Exploration - Depth 2":                                   _loc(3431, "Chapter 4"),
+    "Underground Exploration - Depth 3":                                   _loc(3432, "Chapter 4"),
+    "Intercept the Redguns/Ambush the Vespers/Eliminate V.III":            _loc(3433, "Chapter 4"),
+    "Unknown Territory Survey":                                            _loc(3434, "Chapter 4"),
+    "Reach the Coral Convergence":                                         _loc(3435, "Chapter 4"),
+    "Chapter 4 Side Operation 1":                                          _loc(3436, "Chapter 4"),
+    "Chapter 4 Side Operation 2":                                          _loc(3437, "Chapter 4"),
+    "Chapter 4 Side Operation 3":                                          _loc(3438, "Chapter 4"),
+    "Chapter 4 Side Operation 4":                                          _loc(3439, "Chapter 4"),
+
+    # -- Chapter 5 --
+    "MIA":                                                                 _loc(3440, "Chapter 5"),
+    "Take the Uninhabited Floating City":                                  _loc(3441, "Chapter 5"),
+    "Intercept the Corporate Forces/Eliminate Cinder Carla":               _loc(3442, "Chapter 5"),
+    "Breach the Karman Line":                                              _loc(3443, "Chapter 5"),
+    "Destroy the Drive Block":                                             _loc(3444, "Chapter 5"),
+    "Regain Control of the Xylem":                                         _loc(3445, "Chapter 5"),
+    "Chapter 5 Side Operation 1":                                          _loc(3446, "Chapter 5"),
+    "Shut Down the Closure Satellites/Bring Down the Xylem/Coral Release": _loc(3447, "Chapter 5"),
 
     # -- Key missions (one-time story milestones; persist across NG cycles) --
     # Confirmed firing on these missions across the playthroughs. 6245/6275/6280

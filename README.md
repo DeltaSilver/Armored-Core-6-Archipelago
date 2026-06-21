@@ -69,17 +69,19 @@ the later endings.
 <details>
 <summary>Locations (Checks)</summary>
 
-- **Story progression** - a per-mission completion counter for each chapter
-  (Chapter 1 = 14 checks, Ch2 = 3, Ch3 = 17, Ch4 = 7, Ch5 = 8; 59 total). These
-  tick up one per mission cleared, including branch-route missions.
+- **Story missions** - one check per mission cleared, named after the mission
+  (Operation Wallclimber, Destroy the Ice Worm, …). Internally these are
+  per-chapter completion counters, so a name is the mission that fills that slot
+  on the normal route; branch decision points are shown as "A/B" (e.g. Eliminate
+  the Enforcement Squads/Destroy the Special Forces Craft).
 - **Key missions** - 10 named story-milestone checks (Mining Ship & Dam, Defeat
   Ice Worm, Prison Break, …).
 - **Mercenary ranks** - reach each merc rank 1-17.
 - **Arena** - clear Arena ranks F → S.
 - **Archive logs** - optional collectible checks (experimental; off by default).
 
-Branch-route checks only fire on the route you take; because AC6 has no
-item-gated progression, an unfired check never soft-locks a seed. See
+A single run follows one route, so branch-reserved missions that never fire are
+trimmed from `single` seeds; multi-cycle runs revisit them across cycles. See
 [`FLAG_REFERENCE.md`](FLAG_REFERENCE.md) for the exact flags.
 
 </details>
@@ -91,10 +93,12 @@ The item pool is the AC parts catalogue (~314 parts), shuffled across the
 multiworld. Filler is `COAM x10000`. Received parts appear in the assembly menu
 (back out and re-enter if one doesn't show immediately).
 
-Multi-cycle modes also add small `NG+ Access` / `NG++ Access` progression items.
-These are logic gates only (the mod never grants anything for them in-game); they
-keep the multiworld from placing other games' early items behind your NG+/NG++
-checks. You do not configure them - they are added automatically.
+The pool also includes small auto-managed `Chapter 2..5 Access` (and, on
+multi-cycle modes, `NG+`/`NG++ Access`) progression items. These are logic gates
+only - the mod never grants anything for them in-game. They make AC6 an ordered
+early-to-late game in the multiworld's logic, so Chapter 1 is "early" and the
+finale is "late". That keeps other games' early items in AC6's early chapters and
+their late items out of your endgame. You never configure them.
 
 `mission_reward_multiplier` (1×-4×) controls how many item checks each
 objective awards.

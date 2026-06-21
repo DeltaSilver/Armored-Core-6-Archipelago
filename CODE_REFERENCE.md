@@ -54,8 +54,13 @@ The flag the mod watches are listed in `build/locations.h` (`g_locations`) and
 documented in [`FLAG_REFERENCE.md`](FLAG_REFERENCE.md). Categories:
 
 - **`3000`-`3999` - story / mission flags (cycled).** A per-mission completion
-  counter per chapter. These **reset every NG cycle**, so the DLL treats them
-  specially (see *NG cycles* below). `AC6_IsCycledFlag()` is the test.
+  counter per chapter (positional: the Nth flag is "the Nth mission cleared",
+  not a fixed mission). These **reset every NG cycle**, so the DLL treats them
+  specially (see *NG cycles* below). `AC6_IsCycledFlag()` is the test. The AP
+  world gives each one a mission name lined up from the discovery playthroughs
+  (`worlds/armored_core_6/locations.py`); branch decisions are joined "A/B".
+  Flags that never fire on any tested route (`BRANCH_RESERVED_FLAGS`) are dropped
+  from seeds so they cannot strand items.
 - **`6050`-`6056` arena, `6200`-`6280` key missions, `6401`-`6417` merc ranks -
   one-time.** They persist across NG cycles and fire once.
 - **`6000`/`6001`/`6002` - endings A / B / C.** Used for goal detection; they
@@ -137,6 +142,14 @@ cycle-transition entrances on them, so later-cycle checks are genuinely later in
 logic. These two items use sentinel offsets (`BASE_ID + 2` / `+ 3`); the DLL
 recognises them in `OnItemReceived` and does **not** grant anything in-game (they
 exist only as logic gates). They are auto-managed - players never set them.
+
+The same idea runs *within* a cycle: `Chapter 2..5 Access` (sentinel offsets
+`BASE_ID + 4..7`) gate each chapter, so Chapter 1 (plus the first arena/rank
+checks) is logic sphere 0 and the finale is the deepest sphere. This ordering is
+what lets the multiworld place other games' **early** items in AC6's early
+chapters and keep their late items out of your endgame. All passes are dropped by
+the DLL the same way; only flag IDs are sent for checks, so the per-mission
+naming is a Python-side concern with no DLL impact.
 
 ---
 

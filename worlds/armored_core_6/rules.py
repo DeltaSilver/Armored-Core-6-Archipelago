@@ -28,6 +28,19 @@ def set_rules(world: World, multiworld: MultiWorld, player: int) -> None:
             lambda state, it=cycle_pass[cyc]: state.has(it, player),
         )
 
+    # ── Chapter-access gating (early->late spheres within a cycle) ─────────
+    # Entering Chapter N (in any cycle) requires "Chapter N Access", so Chapter 1
+    # (plus the first arena/rank checks) is sphere 0 and later chapters come
+    # later. This is what lets the multiworld place other games' early items in
+    # AC6's early game instead of treating all of AC6 as immediately reachable.
+    for cyc in range(world._num_cycles()):
+        for ch in range(2, 6):
+            entrance = f"{_chapter_region(cyc, ch - 1)} -> {_chapter_region(cyc, ch)}"
+            set_rule(
+                multiworld.get_entrance(entrance, player),
+                lambda state, it=f"Chapter {ch} Access": state.has(it, player),
+            )
+
     # ── Arena — sequential rank gates ─────────────────────────────────────
     arena_order = ["F", "E", "D", "C", "B", "A", "S"]
     for prev, cur in zip(arena_order, arena_order[1:]):

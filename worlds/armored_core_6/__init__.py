@@ -8,6 +8,7 @@ from .items import (
 )
 from .locations import (
     AC6LocationData, LOCATION_TABLE, ARCHIVE_LOG_LOCATIONS, BASE_LOC_ID,
+    BRANCH_RESERVED_FLAGS,
     make_multiplier_locations, all_multiplier_locations,
     add_cycles, CYCLE_NAMES, NUM_CYCLES,
 )
@@ -92,6 +93,13 @@ class ArmoredCore6World(World):
             locs.update(make_multiplier_locations(mult))
         if self._archive_logs_on():
             locs.update(ARCHIVE_LOG_LOCATIONS)
+        # Branch-reserved story checks never fired on any tested route (NG/NG+/
+        # NG++). With chapter/cycle access passes now acting as progression, a
+        # dead check that could hold a pass is a soft-lock hazard, so drop them
+        # entirely in every mode. (This is also the single-run route trimming:
+        # a single playthrough only ever follows one branch.)
+        locs = {n: d for n, d in locs.items()
+                if d.flag_id not in BRANCH_RESERVED_FLAGS}
         # Cycled modes duplicate the story checks across this run's cycle count.
         if self._dup_checks():
             return add_cycles(locs, self._num_cycles())
@@ -171,12 +179,17 @@ class ArmoredCore6World(World):
 
         items: List[AC6Item] = []
 
-        # Cycle-access passes: one progression item per extra NG cycle this run
-        # uses (ng_plus_* -> "NG+ Access"; full_* -> "NG+ Access" + "NG++ Access").
-        # rules.py gates the NG+/NG++ regions on them, so the multiworld solver
-        # treats later-cycle checks as genuinely later rather than all sphere 0.
+        # Logic-gate passes (progression). rules.py gates regions on these so the
+        # solver sees AC6 as ordered early->late instead of one flat sphere:
+        #  - Cycle passes: one per extra NG cycle (gate NG+/NG++).
+        #  - Chapter passes: gate Chapter 2..5 within every cycle, so Chapter 1
+        #    (+ first arena/rank) is sphere 0 and later chapters come later. This
+        #    is what lets the multiworld place other games' early items in AC6's
+        #    early game.
         cycle_passes = ["NG+ Access", "NG++ Access"][: self._num_cycles() - 1]
-        for name in cycle_passes:
+        chapter_passes = ["Chapter 2 Access", "Chapter 3 Access",
+                          "Chapter 4 Access", "Chapter 5 Access"]
+        for name in cycle_passes + chapter_passes:
             items.append(self.create_item(name))
 
         # Candidate part pool (parts only; never the special items).

@@ -26,11 +26,14 @@ BASE_ID = 7700000
 VICTORY_OFFSET = 9000000   # handled by completion condition, never granted as a part
 COAM_OFFSET    = 1         # filler, skipped by DLL part-grant logic
 
-# Cycle-access passes: progression items that gate the NG+/NG++ regions in logic
-# (multiworld balance — see rules.py). Sentinel offsets the DLL recognises and
-# does NOT grant in-game; they exist only to give AP a real item to gate on.
+# Logic-gate passes: progression items that gate regions in logic so the
+# multiworld solver sees AC6 as an ordered early->late game instead of one flat
+# sphere (see rules.py). NG+/NG++ passes gate the NG cycles; Chapter passes gate
+# each chapter within a cycle. All use sentinel offsets the DLL recognises and
+# does NOT grant in-game; they exist purely to give AP real items to gate on.
 NGPLUS_OFFSET     = 2
 NGPLUSPLUS_OFFSET = 3
+CHAPTER_OFFSETS   = {2: 4, 3: 5, 4: 6, 5: 7}   # "Chapter N Access" -> offset
 
 ITEM_TABLE: dict[str, AC6ItemData] = {
 
@@ -39,6 +42,10 @@ ITEM_TABLE: dict[str, AC6ItemData] = {
     "COAM x10000":               AC6ItemData(BASE_ID + COAM_OFFSET,    ItemClassification.filler),
     "NG+ Access":                AC6ItemData(BASE_ID + NGPLUS_OFFSET,     ItemClassification.progression),
     "NG++ Access":               AC6ItemData(BASE_ID + NGPLUSPLUS_OFFSET, ItemClassification.progression),
+    "Chapter 2 Access":          AC6ItemData(BASE_ID + 4, ItemClassification.progression),
+    "Chapter 3 Access":          AC6ItemData(BASE_ID + 5, ItemClassification.progression),
+    "Chapter 4 Access":          AC6ItemData(BASE_ID + 6, ItemClassification.progression),
+    "Chapter 5 Access":          AC6ItemData(BASE_ID + 7, ItemClassification.progression),
 
     # ── Arm Weapons — Right (10xxxxxx) ───────────────────────────────────
     "MA-J-200 RANSETSU-RF (R)":  AC6ItemData(BASE_ID + 10000000, ItemClassification.useful),
@@ -383,7 +390,9 @@ ITEM_TABLE: dict[str, AC6ItemData] = {
 # Currently Disabled
 ARCHIVE_LOG_NAMES: frozenset[str] = frozenset()
 
-PART_NAMES: frozenset[str] = frozenset(
-    n for n in ITEM_TABLE
-    if n not in ("AC6 Victory", "COAM x10000", "NG+ Access", "NG++ Access")
-)
+_NON_PART = frozenset({
+    "AC6 Victory", "COAM x10000", "NG+ Access", "NG++ Access",
+    "Chapter 2 Access", "Chapter 3 Access", "Chapter 4 Access", "Chapter 5 Access",
+})
+
+PART_NAMES: frozenset[str] = frozenset(n for n in ITEM_TABLE if n not in _NON_PART)

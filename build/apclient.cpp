@@ -24,6 +24,8 @@ using easywsclient::WebSocket;
 #define AC6_COAM_OFFSET        1
 #define AC6_NGPLUS_OFFSET      2   // "NG+ Access" pass - logic gate, never granted
 #define AC6_NGPLUSPLUS_OFFSET  3   // "NG++ Access" pass - logic gate, never granted
+#define AC6_CHAPTER_OFF_LO     4   // "Chapter 2..5 Access" passes (offsets 4-7),
+#define AC6_CHAPTER_OFF_HI     7   // logic gates only, never granted in-game
 
 // ── Connection state ──────────────────────────────────────────────────────
 static std::atomic<bool>  g_apRunning{ false };
@@ -199,6 +201,9 @@ static void OnItemReceived(long long apItemId) {
     if (offset == AC6_COAM_OFFSET) { Log("Received COAM filler (no grant)"); return; }
     if (offset == AC6_NGPLUS_OFFSET || offset == AC6_NGPLUSPLUS_OFFSET) {
         Log("Received NG cycle access pass (no grant)"); return;
+    }
+    if (offset >= AC6_CHAPTER_OFF_LO && offset <= AC6_CHAPTER_OFF_HI) {
+        Log("Received chapter access pass (no grant)"); return;
     }
     if (offset < 0) { Log("Item %lld out of range (skipped)", apItemId); return; }
 

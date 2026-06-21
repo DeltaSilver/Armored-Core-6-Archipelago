@@ -24,6 +24,10 @@ Two halves talk to each other over a standard Archipelago connection:
   in-game **event flags** to detect progress and sends location checks, and it
   **grants AC parts** the player receives by calling the game's own add-item
   function. It does not modify game code - it reads memory and calls one function.
+  It also draws a small **on-screen overlay** (`overlay.cpp`) listing received
+  items and completed checks - a separate layered top-most GDI window, *not* a
+  renderer hook, so it cannot crash the game or clash with ModEngine2 (shows in
+  borderless/windowed mode only).
 - **`worlds/armored_core_6`** is the Python AP world. It defines the item pool,
   the location IDs, the regions/rules, and the slot options. It never touches the
   game directly.

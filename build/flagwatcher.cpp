@@ -4,6 +4,7 @@
 #include "apclient.h"
 #include "dllmain.h"
 #include "memory.h"
+#include "overlay.h"
 
 #include <windows.h>
 #include <thread>
@@ -114,6 +115,7 @@ static void WatcherLoop() {
                 CheckLog("flag %u -> \"%s\" [cycle %d] => locId %lld%s",
                          flag, g_locations[i].name, cycle, (long long)baseId,
                          isArchive ? "" : " (+reward bands)");
+                Overlay_Message(OVL_SENT, "Check  %s", g_locations[i].name);
 
                 if (isArchive) {
                     APClient_SendCheck(baseId);

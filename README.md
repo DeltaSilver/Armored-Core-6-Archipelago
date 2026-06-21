@@ -133,8 +133,10 @@ These live in `ac6ap.cfg`, are off by default, and don't affect normal play:
 
 ## Notes / known limits
 
-- Item-acquisition notifications don't pop on screen; check your AP text client
-  for what you received.
+- An on-screen feed (top-left) shows items you receive and checks you complete.
+  It is a separate top-most overlay window, so it shows in **borderless/windowed**
+  mode (the default), not exclusive fullscreen. The AP text client remains the
+  full record.
 - Shop-purchase checks are not implemented. Checks come from story, key missions,
   arena, and mercenary ranks (plus optional archive logs).
 - Crashing during a mission removes items received during that mission.

@@ -2,6 +2,7 @@
 #include "dllmain.h"
 #include "memory.h"
 #include "partnames.h"
+#include "overlay.h"
 
 #include <windows.h>
 #include <thread>
@@ -208,10 +209,13 @@ static void OnItemReceived(long long apItemId) {
     if (offset < 0) { Log("Item %lld out of range (skipped)", apItemId); return; }
 
     const char* name = GetPartName((int)offset);
-    if (name)
+    if (name) {
         Log("Queuing: %s", name);
-    else
+        Overlay_Message(OVL_RECEIVED, "Received  %s", name);
+    } else {
         Log("Queuing unknown part 0x%X", (unsigned int)offset);
+        Overlay_Message(OVL_RECEIVED, "Received  part 0x%X", (unsigned int)offset);
+    }
 
     QueueGrant((int)offset);
 }

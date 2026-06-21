@@ -148,7 +148,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>psapi.lib;user32.lib;gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\vcpkg\installed\x64-windows-static\lib</AdditionalLibraryDirectories>
     </Link>
     <Manifest>
@@ -164,6 +164,7 @@
     <ClInclude Include="libs\easywsclient.hpp" />
     <ClInclude Include="locations.h" />
     <ClInclude Include="memory.h" />
+    <ClInclude Include="overlay.h" />
     <ClInclude Include="partnames.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
@@ -174,6 +175,7 @@
     <ClCompile Include="flagwriter.cpp" />
     <ClCompile Include="libs\easywsclient.cpp" />
     <ClCompile Include="memory.cpp" />
+    <ClCompile Include="overlay.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

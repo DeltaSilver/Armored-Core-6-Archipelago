@@ -18,6 +18,7 @@
 #include "apclient.h"
 #include "partnames.h"
 #include "allparts.h"
+#include "overlay.h"
 
 #define AC6AP_VERSION "v0.1.3-Beta"
 
@@ -358,6 +359,10 @@ static void MainThread(void*) {
     // Start watching flags.
     FlagWatcher_Start(eventFlagMan);
 
+    // On-screen message feed for received items / completed checks.
+    Overlay_Start();
+    Overlay_Message(OVL_INFO, "Armored Core VI Archipelago connected");
+
     Log("Setup complete. Watching flags and granting received items.");
 
     // Keep the thread alive.
@@ -378,6 +383,7 @@ static void OnLoad() {
 }
 
 static void OnUnload() {
+    Overlay_Stop();
     FlagWatcher_Stop();
     APClient_Disconnect();
     g_grantThreadRunning = false;

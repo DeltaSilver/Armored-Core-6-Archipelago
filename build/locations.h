@@ -1,83 +1,79 @@
 #pragma once
 #include <cstdint>
 
-// A location the flag watcher polls. flagId is the in-game event flag;
-// name is for logging. The AP location ID sent to the server is
-// AC6_BASE_ID + flagId (see apclient.cpp).
+// A location the flag watcher polls. flagId is the in-game event flag; name is
+// for logging (matches worlds/armored_core_6/locations.py exactly so the check
+// log shows the same mission name the player sees in Archipelago). The AP
+// location ID = AC6_BASE_ID + cycle*offset + band*offset + flagId.
 struct AC6Location {
     uint32_t    flagId;
     const char* name;
 };
 
-// The 86 core locations. Flag IDs match the Python locations.py table.
+// Flag IDs + names mirror the Python LOCATION_TABLE. Branch-reserved story flags
+// are still polled here (harmless: they don't fire on tested routes; if one ever
+// does, the check log catches it). Story flags 3000-3999 are cycled by the DLL.
 static const AC6Location g_locations[] = {
-    // Story progression — Chapter 1 (14) — verified NG/NG+/NG++; dead
-    // placeholders removed, real side-mission flags added. 3409 also fires
-    // SetGarageVisited (see flagwatcher.cpp). DLL cycles 3000-3999 per NG cycle.
-    {3400, "Chapter 1 Progress 1"},
-    {3401, "Chapter 1 Progress 2"},
-    {3402, "Chapter 1 Progress 3"},
-    {3403, "Chapter 1 Progress 4"},
-    {3404, "Chapter 1 Progress 5"},
-    {3405, "Chapter 1 Progress 6"},
-    {3406, "Chapter 1 Progress 7"},
-    {3407, "Chapter 1 Progress 8"},
-    {3408, "Chapter 1 Progress 9"},
-    {3409, "Chapter 1 Progress 10"},
-    {3450, "Chapter 1 Progress 11"},
-    {3451, "Chapter 1 Progress 12"},
-    {3452, "Chapter 1 Progress 13"},
-    {3453, "Chapter 1 Progress 14"},
-    // Story progression — Chapter 2 (3 fire; 3413-3419 branch-reserved)
-    {3410, "Chapter 2 Progress 1"},
-    {3411, "Chapter 2 Progress 2"},
-    {3412, "Chapter 2 Progress 3"},
-    {3413, "Chapter 2 Progress 4"},
-    {3414, "Chapter 2 Progress 5"},
-    {3415, "Chapter 2 Progress 6"},
-    {3416, "Chapter 2 Progress 7"},
-    {3417, "Chapter 2 Progress 8"},
-    {3418, "Chapter 2 Progress 9"},
-    {3419, "Chapter 2 Progress 10"},
-    // Story progression — Chapter 3 (17)
-    {3420, "Chapter 3 Progress 1"},
-    {3421, "Chapter 3 Progress 2"},
-    {3422, "Chapter 3 Progress 3"},
-    {3423, "Chapter 3 Progress 4"},
-    {3424, "Chapter 3 Progress 5"},
-    {3425, "Chapter 3 Progress 6"},
-    {3426, "Chapter 3 Progress 7"},
-    {3427, "Chapter 3 Progress 8"},
-    {3428, "Chapter 3 Progress 9"},
-    {3429, "Chapter 3 Progress 10"},
-    {3460, "Chapter 3 Progress 11"},
-    {3461, "Chapter 3 Progress 12"},
-    {3462, "Chapter 3 Progress 13"},
-    {3463, "Chapter 3 Progress 14"},
-    {3464, "Chapter 3 Progress 15"},
-    {3465, "Chapter 3 Progress 16"},
-    {3466, "Chapter 3 Progress 17"},
-    // Story progression — Chapter 4 (7 fire; 3437-3439 branch-reserved)
-    {3430, "Chapter 4 Progress 1"},
-    {3431, "Chapter 4 Progress 2"},
-    {3432, "Chapter 4 Progress 3"},
-    {3433, "Chapter 4 Progress 4"},
-    {3434, "Chapter 4 Progress 5"},
-    {3435, "Chapter 4 Progress 6"},
-    {3436, "Chapter 4 Progress 7"},
-    {3437, "Chapter 4 Progress 8"},
-    {3438, "Chapter 4 Progress 9"},
-    {3439, "Chapter 4 Progress 10"},
-    // Story progression — Chapter 5 (5 fire; 3444-3446 branch-reserved)
-    {3440, "Chapter 5 Progress 1"},
-    {3441, "Chapter 5 Progress 2"},
-    {3442, "Chapter 5 Progress 3"},
-    {3443, "Chapter 5 Progress 4"},
-    {3444, "Chapter 5 Progress 5"},
-    {3445, "Chapter 5 Progress 6"},
-    {3446, "Chapter 5 Progress 7"},
-    {3447, "Chapter 5 Progress 8"},
-    // Key missions (one-time; persist across NG cycles)
+    // -- Story missions (Chapters 1-5) --
+    {3400, "Illegal Entry"},
+    {3401, "Destroy Artillery Installations"},
+    {3402, "Grid 135 Cleanup"},
+    {3403, "Destroy the Transport Helicopters"},
+    {3404, "Destroy the Tester AC"},
+    {3405, "Attack the Dam Complex"},
+    {3406, "Destroy/Escort the Weaponized Mining Ship"},
+    {3407, "Operation Wallclimber"},
+    {3408, "Retrieve Combat Logs"},
+    {3409, "Prisoner Rescue"},
+    {3450, "Investigate BAWS Arsenal No. 2"},
+    {3451, "Obstruct the Mandatory Inspection"},
+    {3452, "Attack the Watchpoint"},
+    {3453, "Chapter 1 Side Operation 1"},
+    {3410, "Infiltrate Grid 086"},
+    {3411, "Eliminate the Doser Faction/Stop the Secret Data Breach"},
+    {3412, "Ocean Crossing"},
+    {3413, "Chapter 2 Side Operation 1"},
+    {3414, "Chapter 2 Side Operation 2"},
+    {3415, "Chapter 2 Side Operation 3"},
+    {3416, "Chapter 2 Side Operation 4"},
+    {3417, "Chapter 2 Side Operation 5"},
+    {3418, "Chapter 2 Side Operation 6"},
+    {3419, "Chapter 2 Side Operation 7"},
+    {3420, "Steal the Survey Data"},
+    {3421, "Attack the Refueling Base"},
+    {3422, "Eliminate V.VII"},
+    {3423, "Tunnel Sabotage/Prevent Corporate Salvage of New Tech"},
+    {3424, "Survey the Uninhabited Floating City"},
+    {3425, "Heavy Missile Launch Support"},
+    {3426, "Eliminate the Enforcement Squads/Destroy the Special Forces Craft"},
+    {3427, "Attack the Old Spaceport"},
+    {3428, "Eliminate Honest Brute"},
+    {3429, "Defend the Old Spaceport/Defend the Dam Complex"},
+    {3460, "Historic Data Recovery"},
+    {3461, "Coral Export Denial (Sortie)"},
+    {3462, "Destroy the Ice Worm"},
+    {3463, "Chapter 3 Side Operation 1"},
+    {3464, "Chapter 3 Side Operation 2"},
+    {3465, "Chapter 3 Side Operation 3"},
+    {3466, "Chapter 3 Side Operation 4"},
+    {3430, "Underground Exploration - Depth 1"},
+    {3431, "Underground Exploration - Depth 2"},
+    {3432, "Underground Exploration - Depth 3"},
+    {3433, "Intercept the Redguns/Ambush the Vespers/Eliminate V.III"},
+    {3434, "Unknown Territory Survey"},
+    {3435, "Reach the Coral Convergence"},
+    {3436, "Chapter 4 Side Operation 1"},
+    {3437, "Chapter 4 Side Operation 2"},
+    {3438, "Chapter 4 Side Operation 3"},
+    {3439, "Chapter 4 Side Operation 4"},
+    {3440, "MIA"},
+    {3441, "Take the Uninhabited Floating City"},
+    {3442, "Intercept the Corporate Forces/Eliminate Cinder Carla"},
+    {3443, "Breach the Karman Line"},
+    {3444, "Destroy the Drive Block"},
+    {3445, "Regain Control of the Xylem"},
+    {3446, "Chapter 5 Side Operation 1"},
+    {3447, "Shut Down the Closure Satellites/Bring Down the Xylem/Coral Release"},
     {6200, "Chapter 1 Submission"},
     {6210, "Mining Ship and Dam Destruction"},
     {6220, "Over the Wall"},
@@ -88,7 +84,6 @@ static const AC6Location g_locations[] = {
     {6275, "Coral Export Denial"},
     {6280, "Coral Convergence"},
     {6260, "Prison Break"},
-    // Mercenary ranks
     {6401, "Reach Mercenary Rank 1"},
     {6402, "Reach Mercenary Rank 2"},
     {6403, "Reach Mercenary Rank 3"},
@@ -106,7 +101,6 @@ static const AC6Location g_locations[] = {
     {6415, "Reach Mercenary Rank 15"},
     {6416, "Reach Mercenary Rank 16"},
     {6417, "Reach Mercenary Rank 17"},
-    // Arena
     {6050, "Complete Arena F"},
     {6051, "Complete Arena E"},
     {6052, "Complete Arena D"},
@@ -114,7 +108,8 @@ static const AC6Location g_locations[] = {
     {6054, "Complete Arena B"},
     {6055, "Complete Arena A"},
     {6056, "Complete Arena S"},
-    // Archive logs (EXPERIMENTAL — flag IDs 4000-4049 unverified).
+
+    // -- Archive logs (EXPERIMENTAL - flag IDs 4000-4049 unverified) --
     {4000, "Archive: License Code Thomas Kirk"},
     {4001, "Archive: License Code Monkey Gordo"},
     {4002, "Archive: License Code G7 Hakra"},
@@ -170,7 +165,7 @@ static const AC6Location g_locations[] = {
 static const int g_locationCount =
 sizeof(g_locations) / sizeof(g_locations[0]);
 
-// Goal flags — any one set means an ending was reached.
+// Goal flags - any one set means an ending was reached.
 static const uint32_t g_goalFlags[] = { 6000, 6001, 6002 };
 static const int g_goalFlagCount =
 sizeof(g_goalFlags) / sizeof(g_goalFlags[0]);

@@ -158,6 +158,7 @@ naming is a Python-side concern with no DLL impact.
 | File | Contents |
 |------|----------|
 | `ac6ap_log.txt` | Timestamped diagnostic log (overwritten each launch) |
+| `ac6ap_checks.txt` | Every check sent, with its mission name, cycle, and location ID (append mode, survives restarts). For confirming a mission fired the right check / reporting mismatches. |
 | `ac6ap_recv_<seed>_<slot>.txt` | Count of received items already granted |
 | `ac6ap_cycle_<seed>_<slot>.txt` | Current NG cycle (0/1/2) |
 | `ac6ap_discovery.txt` | Flag-flip log, only when `discover=1` (append mode) |

@@ -33,8 +33,37 @@ static std::unordered_set<uint32_t> g_sentFlags;
 static int  g_checksSent = 0;
 static bool g_goalReported = false;
 
+// Dedicated, append-mode check log (ac6ap_checks.txt). Every check the DLL sends
+// is recorded here with the same mission NAME the player sees in Archipelago, so
+// a tester can confirm each mission fired the right check (and report any that
+// do not). Append mode means it survives game restarts. Separate from
+// ac6ap_log.txt (which is overwritten each launch) so it is easy to hand over.
+static FILE* g_checkFile = nullptr;
+
+static void CheckLog(const char* fmt, ...) {
+    if (!g_checkFile) return;
+    SYSTEMTIME t; GetLocalTime(&t);
+    fprintf(g_checkFile, "%02d:%02d:%02d  ", t.wHour, t.wMinute, t.wSecond);
+    va_list args; va_start(args, fmt);
+    vfprintf(g_checkFile, fmt, args);
+    va_end(args);
+    fputc('\n', g_checkFile);
+    fflush(g_checkFile);
+}
+
 static void WatcherLoop() {
     Log("FlagWatcher started, watching %d locations", g_locationCount);
+
+    if (!g_checkFile) {
+        std::string cpath = GetDllDir() + "ac6ap_checks.txt";
+        g_checkFile = _fsopen(cpath.c_str(), "a", _SH_DENYWR);
+        CheckLog("===== AC6AP check log (session start, %d locations) =====",
+                 g_locationCount);
+        CheckLog("Each line below is a check the mod sent when a flag went SET.");
+        CheckLog("If a mission name here does NOT match the mission you just");
+        CheckLog("cleared, copy the line and report it. Format:");
+        CheckLog("  flag <id> -> \"<mission>\" [cycle N] => locId <id>");
+    }
 
     while (g_watcherRunning) {
         // Re-read the live save pointer + divisor every poll. Both go
@@ -82,6 +111,10 @@ static void WatcherLoop() {
                 // Archive flags (4000-4049) are a separate experimental
                 bool isArchive = (flag >= 4000 && flag <= 4049);
 
+                CheckLog("flag %u -> \"%s\" [cycle %d] => locId %lld%s",
+                         flag, g_locations[i].name, cycle, (long long)baseId,
+                         isArchive ? "" : " (+reward bands)");
+
                 if (isArchive) {
                     APClient_SendCheck(baseId);
                 }
@@ -112,6 +145,9 @@ static void WatcherLoop() {
             if (clearedStory >= 8) {
                 Log("NG cycle reset detected (%d story flags cleared at once).",
                     clearedStory);
+                CheckLog("--- NG cycle reset detected (%d story flags cleared) "
+                         "-> now cycle %d. Story checks will re-fire for this "
+                         "cycle. ---", clearedStory, APClient_GetCycle() + 1);
                 APClient_AdvanceCycle();
                 for (auto it = g_sentFlags.begin(); it != g_sentFlags.end(); ) {
                     if (AC6_IsCycledFlag(*it)) it = g_sentFlags.erase(it);
@@ -132,6 +168,8 @@ static void WatcherLoop() {
             if (setCount >= required) {
                 Log("GOAL REACHED (%d/%d endings, run mode %d)",
                     setCount, required, APClient_GetRunMode());
+                CheckLog("===== GOAL REACHED (%d/%d endings) =====",
+                         setCount, required);
                 APClient_SendGoal();
                 g_goalReported = true;
             }

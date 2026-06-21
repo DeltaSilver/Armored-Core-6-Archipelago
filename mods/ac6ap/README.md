@@ -15,4 +15,6 @@ added yourself:
 missing, the DLL writes a default one here on first launch.
 
 Runtime files the DLL writes here (all gitignored): `ac6ap_log.txt`,
-`ac6ap_discovery.txt`, `ac6ap_recv_*.txt`, `ac6ap_cycle_*.txt`.
+`ac6ap_checks.txt` (every check sent, with its mission name - check this if a
+mission seems to fire the wrong check), `ac6ap_discovery.txt`, `ac6ap_recv_*.txt`,
+`ac6ap_cycle_*.txt`.

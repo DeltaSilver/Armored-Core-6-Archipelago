@@ -44,6 +44,12 @@ For the full event-flag map, see [`FLAG_REFERENCE.md`](FLAG_REFERENCE.md).
 `slot` in `ac6ap.cfg` must match the `name` in your YAML exactly. A log file
 (`ac6ap_log.txt`) appears in the mod folder - check it if the mod doesn't connect.
 
+**Connecting in-game:** press **F8** to open the Archipelago settings window, where
+you can set Host / Port / Slot / Password and hit **Connect** without editing the
+cfg or restarting. It saves your entries back to `ac6ap.cfg` and reconnects live,
+so you can also fix a typo or switch rooms mid-session. (Borderless/windowed mode;
+it takes keyboard focus while open.)
+
 ---
 
 <details>

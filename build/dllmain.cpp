@@ -393,10 +393,13 @@ static void MainThread(void*) {
     AC6Config cfg = LoadConfig(g_cfgPath);
     g_cfg = cfg;
 
-    // Optional: F7 hotkey to unlock the whole garage (works in any mode).
-    if (cfg.grantAllParts) {
-        _beginthread(GrantAllPartsThread, 0, nullptr);
-    }
+    // F7 grant-all-parts hotkey is TEMPORARILY DISABLED: F7 sits right next to
+    // the F8 settings hotkey and is too easy to hit by accident. Re-enable by
+    // uncommenting (and `grant_all_parts=1` in the cfg) once F8 is settled.
+    // if (cfg.grantAllParts) {
+    //     _beginthread(GrantAllPartsThread, 0, nullptr);
+    // }
+    (void)GrantAllPartsThread;   // keep the function referenced while disabled
 
     // Discovery mode: don't touch Archipelago at all — just log flag flips so we
     // can map missions -> trigger flags in one playthrough.

@@ -3,8 +3,6 @@ An archipelago multiworld for Armored Core VI. Story, arena, and mercenary-rank
 progress send Archipelago checks; the AC parts you receive are shuffled across
 the multiworld.
 
-**Does not work with archipelago.gg right now. Please self host the ap!**
-
 ## Save Data
 This mod is meant for a **fresh save**. It doesn't create a separate save file
 yet, so set your real save aside before playing and restore it afterwards.

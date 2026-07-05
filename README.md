@@ -28,11 +28,14 @@ checks; the AC parts you receive are shuffled across the whole multiworld.
 
 1. **Set up ModEngine2** and confirm it launches the game normally first.
 2. **Copy the [mod](https://github.com/DeltaSilver/Armored-Core-6-Archipelago/releases) files** into your ModEngine2 `mod` folder:
-   - `ac6ap.dll`
-   - `ac6ap.cfg`
-   - `regulation.bin`
-   - `event/`
-   - `msg/`
+```
+mod/
+├── ac6ap.dll
+├── ac6ap.cfg
+├── regulation.bin
+├── event/
+└── msg/
+```
 4. **Register the DLL** in `config_armoredcore6.toml`:
    ```toml
    external_dlls = ["mod/ac6ap.dll"]
@@ -49,26 +52,6 @@ It saves your entries back to `ac6ap.cfg` and reconnects without restarting.
 ---
 
 <details>
-<summary>Run Modes</summary>
-
-AC6's story flags reset on every New Game cycle, so the same missions can be
-replayed in NG+ and NG++. `run_mode` in your YAML chooses how the run is scoped:
-
-| Mode | Cycles played | Goal | Story checks |
-|------|---------------|------|--------------|
-| `single` | NG | reach any one ending | NG only |
-| `ng_plus_run` | NG → NG+ | reach both of the first two endings | each mission once |
-| `ng_plus_run_cycled` | NG → NG+ | both endings | each mission, **per cycle** (~2×) |
-| `full_run` | NG → NG+ → NG++ | all three endings | each mission once |
-| `full_run_cycled` | NG → NG+ → NG++ | all three endings | each mission, **per cycle** (~3×) |
-
-The `*_cycled` modes give each playthrough cycle its own independent set of
-mission checks; the others fire each check once and use NG+/NG++ only to reach
-the later endings.
-
-</details>
-
-<details>
 <summary>Locations (Checks)</summary>
 
 - **Story missions** - one check per mission cleared, named after the mission
@@ -76,15 +59,13 @@ the later endings.
   per-chapter completion counters, so a name is the mission that fills that slot
   on the normal route; branch decision points are shown as "A/B" (e.g. Eliminate
   the Enforcement Squads/Destroy the Special Forces Craft).
-- **Key missions** - 10 named story-milestone checks (Mining Ship & Dam, Defeat
-  Ice Worm, Prison Break, …).
 - **Mercenary ranks** - reach each merc rank 1-17.
-- **Arena** - clear Arena ranks F → S.
-- **Archive logs** - optional collectible checks (experimental; off by default).
+- **Arena** - clear Arena ranks F → S, plus the three simulators.
+- **Shop** - optional purchase checks (off by default).
 
 A single run follows one route, so branch-reserved missions that never fire are
-trimmed from `single` seeds; multi-cycle runs revisit them across cycles. See
-[`FLAG_REFERENCE.md`](FLAG_REFERENCE.md) for the exact flags.
+trimmed from the seed. See [`FLAG_REFERENCE.md`](FLAG_REFERENCE.md) for the exact
+flags.
 
 </details>
 
@@ -105,9 +86,13 @@ objective awards.
 
 | Option | Values | Description |
 |--------|--------|-------------|
-| `run_mode` | single / ng_plus_run / ng_plus_run_cycled / full_run / full_run_cycled | How many NG cycles the run spans and whether each cycle has its own checks |
-| `mission_reward_multiplier` | 1-4 | Item checks awarded per objective |
-| `archive_logs` | off / on | Add the archive-log collectibles as checks (experimental) |
+| `mission_reward_multiplier` | 1-4 | Item checks awarded per mission / arena / rank objective |
+| `shop_checks` | true / false | Add shop purchases as check locations (leftover parts spill into the shop) |
+| `mercenary_rank_checks` | 0-17 | How many mercenary rank checks to include |
+| `arena_checks` | 0-10 | How many arena checks to include (F → S, then the three simulators) |
+
+Only single-playthrough runs are supported right now. NG+/NG++ multi-cycle
+modes are disabled pending further testing.
 
 </details>
 

@@ -1,0 +1,9 @@
+# Normalize line endings
+* text=auto
+*.py text eol=lf
+*.md text eol=lf
+*.cpp text eol=crlf
+*.h text eol=crlf
+*.hpp text eol=crlf
+*.vcxproj text eol=crlf
+*.cfg text eol=lf

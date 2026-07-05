@@ -1,24 +1,12 @@
-from Options import Toggle, Choice, PerGameCommonOptions
+from Options import Toggle, Choice, Range, PerGameCommonOptions
 from dataclasses import dataclass
-
-
-class ArchiveLogs(Toggle):
-    """
-    Add the 50 archive log collectibles as extra CHECK locations.
-
-    currently non-functional
-    """
-    display_name = "Archive Logs as Checks"
-    default = 0
 
 
 class MissionRewardMultiplier(Choice):
     """
     How many item checks each mission/arena/rank objective awards.
-
-    Note: at 4x across all categories the seed uses nearly the entire part
-    catalogue (~312 of 314 parts), so there is little variety between seeds.
-    Lower values leave more parts rotating in/out each seed.
+    At 4x the seed uses nearly the entire part catalogue, leaving little
+    variety between seeds. Lower values give more rotation per seed.
     """
     display_name = "Mission Reward Multiplier"
     option_1x = 1
@@ -30,32 +18,65 @@ class MissionRewardMultiplier(Choice):
 
 class RunMode(Choice):
     """
-    How many New Game cycles the run spans, and whether each cycle has its own
-    checks. (AC6's story flags reset every NG cycle, so the same missions can be
-    replayed in NG+ and NG++.)
+    How many New Game cycles the run spans, and whether each cycle has its
+    own set of checks.
 
-    single:             one playthrough; reaching any ending completes the goal.
-                        Only the NG mission checks exist.
-    ng_plus_run:        play NG -> NG+ (both of the first two endings) to
-                        complete the goal; each mission's check fires only ONCE.
-    ng_plus_run_cycled: play NG -> NG+; every mission fires a SEPARATE check in
-                        each cycle (~2x the story checks).
-    full_run:           play NG -> NG+ -> NG++ (all three endings) to complete
-                        the goal; each mission's check fires only ONCE.
-    full_run_cycled:    play NG -> NG+ -> NG++; every mission fires a SEPARATE
-                        check in each cycle (~3x the story checks).
+    single:             one playthrough, any ending completes the goal.
+    ng_plus_run:        NG → NG+, each mission checks once total.
+    ng_plus_run_cycled: NG → NG+, each mission fires a separate check per cycle.
+    full_run:           NG → NG+ → NG++, each mission checks once total.
+    full_run_cycled:    NG → NG+ → NG++, each mission fires a separate check per cycle.
     """
     display_name = "Run Mode"
     option_single             = 0
-    option_ng_plus_run        = 1
-    option_ng_plus_run_cycled = 2
-    option_full_run           = 3
-    option_full_run_cycled    = 4
+    # option_ng_plus_run        = 1
+    # option_ng_plus_run_cycled = 2
+    # option_full_run           = 3
+    # option_full_run_cycled    = 4
     default = 0
 
 
+class MercenaryRankChecks(Range):
+    """
+    How many mercenary rank checks to include (0-17).
+    Order: 1 -> 2 -> ... -> 17. Set to 0 to disable.
+    """
+    display_name = "Mercenary Rank Checks"
+    range_start = 0
+    range_end   = 17
+    default     = 17
+
+
+class ArenaChecks(Range):
+    """
+    How many arena checks to include (0-10).
+    Order: 1=F -> 2=E -> 3=D -> 4=C -> 5=B -> 6=A -> 7=S -> 8=Alpha Simulator -> 9=Beta Simulator -> 10=Gamma Simulator
+    Set to 0 to disable.
+    """
+    display_name = "Arena Checks"
+    range_start = 0
+    range_end   = 10
+    default     = 10
+
+
+class ShopChecks(Toggle):
+    """
+    Add shop purchases as check locations. Shop slots absorb any remaining
+    parts after mission/arena/rank locations are filled, up to 300 slots
+    across 4 chapters. Slot mapping is sent via slot_data; no per-seed files
+    are needed. Shop checks are cycle-agnostic and fire exactly once.
+    """
+    display_name = "Shop Checks"
+    default = 0
+
+
+# ---------------------------------------------------------------------------
+# Options dataclass
+# ---------------------------------------------------------------------------
 @dataclass
 class AC6Options(PerGameCommonOptions):
-    archive_logs:               ArchiveLogs
     mission_reward_multiplier:  MissionRewardMultiplier
     run_mode:                   RunMode
+    shop_checks:                ShopChecks
+    mercenary_rank_checks:      MercenaryRankChecks
+    arena_checks:               ArenaChecks

@@ -142,13 +142,13 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(ProjectDir)libs;C:\vcpkg\installed\x64-windows-static\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\owena\Documents\ac6ap\DLLEdit\ac6ap\libs; C:\vcpkg\installed\x64-windows-static\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>psapi.lib;user32.lib;gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\vcpkg\installed\x64-windows-static\lib</AdditionalLibraryDirectories>
     </Link>
     <Manifest>
@@ -156,6 +156,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="allparts.h" />
     <ClInclude Include="apclient.h" />
     <ClInclude Include="configui.h" />
     <ClInclude Include="dllmain.h" />
@@ -163,11 +164,65 @@
     <ClInclude Include="flagwriter.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="libs\easywsclient.hpp" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXBase64.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXBench.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXCancellationRequest.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXConnectionState.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXDNSLookup.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXExponentialBackoff.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXGetFreePort.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXGzipCodec.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXHttp.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXHttpClient.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXHttpServer.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXNetSystem.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXProgressCallback.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXSelectInterrupt.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXSelectInterruptEvent.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXSelectInterruptFactory.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXSelectInterruptPipe.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXSetThreadName.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXSocket.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXSocketAppleSSL.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXSocketConnect.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXSocketFactory.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXSocketMbedTLS.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXSocketOpenSSL.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXSocketServer.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXSocketTLSOptions.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXStrCaseCompare.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXUdpSocket.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXUniquePtr.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXUrlParser.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXUserAgent.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXUtf8Validator.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXUuid.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocket.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketCloseConstants.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketCloseInfo.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketErrorInfo.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketHandshake.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketHandshakeKeyGen.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketHttpHeaders.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketInitResult.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketMessage.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketMessageType.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketOpenInfo.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketPerMessageDeflate.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketPerMessageDeflateCodec.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketPerMessageDeflateOptions.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketProxyServer.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketSendData.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketSendInfo.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketServer.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketTransport.h" />
+    <ClInclude Include="libs\IXWebSocket-12.0.0\ixwebsocket\IXWebSocketVersion.h" />
     <ClInclude Include="locations.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="overlay.h" />
     <ClInclude Include="partnames.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="shopslots.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="apclient.cpp" />
@@ -178,6 +233,7 @@
     <ClCompile Include="libs\easywsclient.cpp" />
     <ClCompile Include="memory.cpp" />
     <ClCompile Include="overlay.cpp" />
+    <ClCompile Include="shopslots.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

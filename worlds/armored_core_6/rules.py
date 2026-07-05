@@ -2,24 +2,18 @@ from worlds.AutoWorld import World
 from worlds.generic.Rules import set_rule
 from BaseClasses import MultiWorld
 
-from .locations import CYCLE_NAMES
+from .locations import CYCLE_NAMES, SHOP_CHAPTERS
 
 
 def _chapter_region(cycle: int, chapter: int) -> str:
-    # Must match create_regions in __init__.py.
     prefix = "" if cycle == 0 else f"{CYCLE_NAMES[cycle]} "
     return f"{prefix}Chapter {chapter}"
 
 
 def set_rules(world: World, multiworld: MultiWorld, player: int) -> None:
-    # ── Cycle-access gating (multiworld balance) ───────────────────────────
-    # Within a cycle, AC6 has no item-based hard gates (you can clear any
-    # mission with default gear), so the region chain is the whole intra-cycle
-    # progression model. But the cycle TRANSITIONS must be gated on a real item,
-    # or the multiworld solver sees all of NG+/NG++ as reachable from sphere 0
-    # and may place other games' early-critical progression behind your NG++
-    # finale. So each cycle transition requires its access pass (a progression
-    # item create_items adds for multi-cycle modes).
+
+    # -- Cycle transitions -----------------------------------------------
+    # Require access passes so NG+/NG++ locations are not sphere 0.
     cycle_pass = {1: "NG+ Access", 2: "NG++ Access"}
     for cyc in range(1, world._num_cycles()):
         entrance = f"{_chapter_region(cyc - 1, 5)} -> {_chapter_region(cyc, 1)}"
@@ -28,33 +22,65 @@ def set_rules(world: World, multiworld: MultiWorld, player: int) -> None:
             lambda state, it=cycle_pass[cyc]: state.has(it, player),
         )
 
-    # ── Chapter-access gating (early->late spheres within a cycle) ─────────
-    # Entering Chapter N (in any cycle) requires "Chapter N Access", so Chapter 1
-    # (plus the first arena/rank checks) is sphere 0 and later chapters come
-    # later. This is what lets the multiworld place other games' early items in
-    # AC6's early game instead of treating all of AC6 as immediately reachable.
+    # -- Chapter sphere gating -------------------------------------------
+    # Each chapter requires the previous chapter's locked Complete event.
+    # Spheres: NG 1-5, NG+ 6-10, NG++ 11-15.
     for cyc in range(world._num_cycles()):
-        for ch in range(2, 6):
-            entrance = f"{_chapter_region(cyc, ch - 1)} -> {_chapter_region(cyc, ch)}"
+        for ch in range(1, 5):
+            entrance = f"{_chapter_region(cyc, ch)} -> {_chapter_region(cyc, ch + 1)}"
             set_rule(
                 multiworld.get_entrance(entrance, player),
-                lambda state, it=f"Chapter {ch} Access": state.has(it, player),
+                lambda state, it=f"{_chapter_region(cyc, ch)} Complete":
+                    state.has(it, player),
             )
 
-    # ── Arena — sequential rank gates ─────────────────────────────────────
-    arena_order = ["F", "E", "D", "C", "B", "A", "S"]
-    for prev, cur in zip(arena_order, arena_order[1:]):
+    # -- Shop chapter gating ---------------------------------------------
+    # Solver-side only; DLL handles the actual in-game unlock.
+    if world._compute_batches_per_ch() > 0:
+        shop_gates = {
+            2: "Chapter 1 Complete",
+            3: "Chapter 2 Complete",
+            4: "Chapter 3 Complete",
+        }
+        for ch, required in shop_gates.items():
+            set_rule(
+                multiworld.get_entrance(f"Menu -> Shop Ch{ch}", player),
+                lambda state, it=required: state.has(it, player),
+            )
+
+    # -- Arena -----------------------------------------------------------
+    # F→E→D→C→B→A→S→Alpha→Beta→Gamma, bounded to active count.
+    arena_count = world._arena_count()
+    arena_tiers = ["F", "E", "D", "C", "B", "A", "S"]
+    for i in range(1, min(arena_count, len(arena_tiers))):
+        cur, prev = arena_tiers[i], arena_tiers[i - 1]
         set_rule(
             multiworld.get_location(f"Complete Arena {cur}", player),
-            lambda state, p=prev: state.can_reach(
-                f"Complete Arena {p}", "Location", player),
+            lambda state, p=prev: state.can_reach(f"Complete Arena {p}", "Location", player),
         )
+    simulator_order = ["Alpha Simulator", "Beta Simulator", "Gamma Simulator"]
+    for i, sim in enumerate(simulator_order):
+        if len(arena_tiers) + i >= arena_count:
+            break
+        if i == 0:
+            if arena_count > len(arena_tiers):
+                set_rule(
+                    multiworld.get_location(f"Complete {sim}", player),
+                    lambda state: state.can_reach("Complete Arena S", "Location", player),
+                )
+        else:
+            prev_sim = simulator_order[i - 1]
+            set_rule(
+                multiworld.get_location(f"Complete {sim}", player),
+                lambda state, p=prev_sim: state.can_reach(f"Complete {p}", "Location", player),
+            )
 
-    # ── Mercenary ranks — sequential ──────────────────────────────────────
-    for i in range(2, 18):
+    # -- Ranks -----------------------------------------------------------
+    # Sequential 1→2→…→N, bounded to active count.
+    rank_count = world._rank_count()
+    for i in range(2, rank_count + 1):
         set_rule(
             multiworld.get_location(f"Reach Mercenary Rank {i}", player),
             lambda state, prev=i - 1: state.can_reach(
-                f"Reach Mercenary Rank {prev}", "Location", player
-            ),
+                f"Reach Mercenary Rank {prev}", "Location", player),
         )

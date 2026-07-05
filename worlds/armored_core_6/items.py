@@ -26,26 +26,19 @@ BASE_ID = 7700000
 VICTORY_OFFSET = 9000000   # handled by completion condition, never granted as a part
 COAM_OFFSET    = 1         # filler, skipped by DLL part-grant logic
 
-# Logic-gate passes: progression items that gate regions in logic so the
-# multiworld solver sees AC6 as an ordered early->late game instead of one flat
-# sphere (see rules.py). NG+/NG++ passes gate the NG cycles; Chapter passes gate
-# each chapter within a cycle. All use sentinel offsets the DLL recognises and
-# does NOT grant in-game; they exist purely to give AP real items to gate on.
+# Cycle-access passes: progression items that gate the NG+/NG++ regions in logic
+# (multiworld balance — see rules.py). Sentinel offsets the DLL recognises and
+# does NOT grant in-game; they exist only to give AP a real item to gate on.
 NGPLUS_OFFSET     = 2
 NGPLUSPLUS_OFFSET = 3
-CHAPTER_OFFSETS   = {2: 4, 3: 5, 4: 6, 5: 7}   # "Chapter N Access" -> offset
 
 ITEM_TABLE: dict[str, AC6ItemData] = {
 
     # ── Special / non-part ───────────────────────────────────────────────
     "AC6 Victory":               AC6ItemData(BASE_ID + VICTORY_OFFSET, ItemClassification.progression),
-    "COAM x10000":               AC6ItemData(BASE_ID + COAM_OFFSET,    ItemClassification.filler),
+    "COAM x50000":               AC6ItemData(BASE_ID + COAM_OFFSET,    ItemClassification.filler),
     "NG+ Access":                AC6ItemData(BASE_ID + NGPLUS_OFFSET,     ItemClassification.progression),
     "NG++ Access":               AC6ItemData(BASE_ID + NGPLUSPLUS_OFFSET, ItemClassification.progression),
-    "Chapter 2 Access":          AC6ItemData(BASE_ID + 4, ItemClassification.progression),
-    "Chapter 3 Access":          AC6ItemData(BASE_ID + 5, ItemClassification.progression),
-    "Chapter 4 Access":          AC6ItemData(BASE_ID + 6, ItemClassification.progression),
-    "Chapter 5 Access":          AC6ItemData(BASE_ID + 7, ItemClassification.progression),
 
     # ── Arm Weapons — Right (10xxxxxx) ───────────────────────────────────
     "MA-J-200 RANSETSU-RF (R)":  AC6ItemData(BASE_ID + 10000000, ItemClassification.useful),
@@ -357,42 +350,40 @@ ITEM_TABLE: dict[str, AC6ItemData] = {
     "BC-0400 MULE":              AC6ItemData(BASE_ID + 0x6394999c, ItemClassification.useful),
     "BST-G1/P10":                AC6ItemData(BASE_ID + 0x63949a00, ItemClassification.useful),
 
-    # ── FCS (stored ID = 0x50000000 + decimal _ID) ───────────────────────
-    "FCS-G1/P01":                AC6ItemData(BASE_ID + 0x53dfd240, ItemClassification.useful),
-    "FCS-G2/P05":                AC6ItemData(BASE_ID + 0x53dff950, ItemClassification.useful),
-    "FCS-G2/P10SLT":             AC6ItemData(BASE_ID + 0x53dff9b4, ItemClassification.useful),
-    "FCS-G2/P12SML":             AC6ItemData(BASE_ID + 0x53dffa18, ItemClassification.useful),
-    "FC-006 ABBOT":              AC6ItemData(BASE_ID + 0x53dffa7c, ItemClassification.useful),
-    "FC-008 TALBOT":             AC6ItemData(BASE_ID + 0x53dffae0, ItemClassification.useful),
-    "VE-21A":                    AC6ItemData(BASE_ID + 0x53e02060, ItemClassification.useful),
-    "VE-21B":                    AC6ItemData(BASE_ID + 0x53e020c4, ItemClassification.useful),
-    "IA-C01F: OCELLUS":          AC6ItemData(BASE_ID + 0x53e04770, ItemClassification.useful),
-    "IB-C03F: WLT 001":          AC6ItemData(BASE_ID + 0x53e047d4, ItemClassification.useful),
+    # ── FCS (AddItem ID: 0x742Cxxxx) ───────────────────────────────────────
+    "FCS-G1/P01":                AC6ItemData(BASE_ID + 0x742c1d80, ItemClassification.useful),
+    "FCS-G2/P05":                AC6ItemData(BASE_ID + 0x742c4490, ItemClassification.useful),
+    "FCS-G2/P10SLT":             AC6ItemData(BASE_ID + 0x742c44f4, ItemClassification.useful),
+    "FCS-G2/P12SML":             AC6ItemData(BASE_ID + 0x742c4558, ItemClassification.useful),
+    "FC-006 ABBOT":              AC6ItemData(BASE_ID + 0x742c45bc, ItemClassification.useful),
+    "FC-008 TALBOT":             AC6ItemData(BASE_ID + 0x742c4620, ItemClassification.useful),
+    "VE-21A":                    AC6ItemData(BASE_ID + 0x742c6ba0, ItemClassification.useful),
+    "VE-21B":                    AC6ItemData(BASE_ID + 0x742c6c04, ItemClassification.useful),
+    "IA-C01F: OCELLUS":          AC6ItemData(BASE_ID + 0x742c92b0, ItemClassification.useful),
+    "IB-C03F: WLT 001":          AC6ItemData(BASE_ID + 0x742c9314, ItemClassification.useful),
 
-    # ── Generators (stored ID = 0x70000000 + decimal _ID) ────────────────
-    "AG-J-098 JOSO":             AC6ItemData(BASE_ID + 0x742c1d80, ItemClassification.useful),
-    "DF-GN-02 LING-TAI":         AC6ItemData(BASE_ID + 0x742c4490, ItemClassification.useful),
-    "DF-GN-06 MING-TANG":        AC6ItemData(BASE_ID + 0x742c44f4, ItemClassification.useful),
-    "VP-20S":                    AC6ItemData(BASE_ID + 0x742c4558, ItemClassification.useful),
-    "VP-20C":                    AC6ItemData(BASE_ID + 0x742c45bc, ItemClassification.useful),
-    "AG-E-013 YABA":             AC6ItemData(BASE_ID + 0x742c4620, ItemClassification.useful),
-    "VE-20A":                    AC6ItemData(BASE_ID + 0x742c6ba0, ItemClassification.useful),
-    "VE-20B":                    AC6ItemData(BASE_ID + 0x742c6c04, ItemClassification.useful),
-    "DF-GN-08 SAN-TAI":          AC6ItemData(BASE_ID + 0x742cb9c0, ItemClassification.useful),
-    "VP-20D":                    AC6ItemData(BASE_ID + 0x742cba24, ItemClassification.useful),
-    "AG-T-005 HOKUSHI":          AC6ItemData(BASE_ID + 0x742cba88, ItemClassification.useful),
-    "VE-20C":                    AC6ItemData(BASE_ID + 0x742cbaec, ItemClassification.useful),
-    "IA-C01G: AORTA":            AC6ItemData(BASE_ID + 0x742c92b0, ItemClassification.useful),
-    "IB-C03G: NGI 000":          AC6ItemData(BASE_ID + 0x742c9314, ItemClassification.useful),
+    # ── Generators (AddItem ID: 0x53DFxxxx / 0x53E0xxxx) ───────────────────
+    "AG-J-098 JOSO":             AC6ItemData(BASE_ID + 0x53dfd240, ItemClassification.useful),
+    "DF-GN-02 LING-TAI":         AC6ItemData(BASE_ID + 0x53dff950, ItemClassification.useful),
+    "DF-GN-06 MING-TANG":        AC6ItemData(BASE_ID + 0x53dff9b4, ItemClassification.useful),
+    "VP-20S":                    AC6ItemData(BASE_ID + 0x53dffa18, ItemClassification.useful),
+    "VP-20C":                    AC6ItemData(BASE_ID + 0x53dffa7c, ItemClassification.useful),
+    "AG-E-013 YABA":             AC6ItemData(BASE_ID + 0x53dffae0, ItemClassification.useful),
+    "VE-20A":                    AC6ItemData(BASE_ID + 0x53e02060, ItemClassification.useful),
+    "VE-20B":                    AC6ItemData(BASE_ID + 0x53e020c4, ItemClassification.useful),
+    "DF-GN-08 SAN-TAI":          AC6ItemData(BASE_ID + 0x53e06e80, ItemClassification.useful),
+    "VP-20D":                    AC6ItemData(BASE_ID + 0x53e06ee4, ItemClassification.useful),
+    "AG-T-005 HOKUSHI":          AC6ItemData(BASE_ID + 0x53e06f48, ItemClassification.useful),
+    "VE-20C":                    AC6ItemData(BASE_ID + 0x53e06fac, ItemClassification.useful),
+    "IA-C01G: AORTA":            AC6ItemData(BASE_ID + 0x53e04770, ItemClassification.useful),
+    "IB-C03G: NGI 000":          AC6ItemData(BASE_ID + 0x53e047d4, ItemClassification.useful),
 }
 
 # Convenience sets used by __init__.py.
 # Currently Disabled
 ARCHIVE_LOG_NAMES: frozenset[str] = frozenset()
 
-_NON_PART = frozenset({
-    "AC6 Victory", "COAM x10000", "NG+ Access", "NG++ Access",
-    "Chapter 2 Access", "Chapter 3 Access", "Chapter 4 Access", "Chapter 5 Access",
-})
-
-PART_NAMES: frozenset[str] = frozenset(n for n in ITEM_TABLE if n not in _NON_PART)
+PART_NAMES: frozenset[str] = frozenset(
+    n for n in ITEM_TABLE
+    if n not in ("AC6 Victory", "COAM x50000", "NG+ Access", "NG++ Access")
+)

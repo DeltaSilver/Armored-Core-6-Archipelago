@@ -1,3 +1,6 @@
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -17,11 +20,10 @@
 #include "flagwatcher.h"
 #include "apclient.h"
 #include "partnames.h"
-#include "allparts.h"
 #include "overlay.h"
 #include "configui.h"
 
-#define AC6AP_VERSION "v0.1.3-Beta"
+#define AC6AP_VERSION "v0.2.0-Beta"
 
 static FILE* g_logFile = nullptr;
 
@@ -50,10 +52,7 @@ struct AC6Config {
     std::string port = "38281";
     std::string slot = "Player1";
     std::string password = "";
-    bool        discover = false;       // discovery mode: log flag flips, no AP checks
-    std::string discoverRanges = "";    // "a-b,c-d"; empty = sensible default
-    bool        grantAllParts = false;  // enable F7 hotkey to unlock every part
-    bool        overlay = true;         // on-screen message feed (set 0 to disable)
+    float       uiScale = 1.0f;
 };
 
 static std::string Trim(const std::string& s) {
@@ -77,20 +76,15 @@ static AC6Config LoadConfig(const std::string& path) {
                 << "#   port     = room port number\n"
                 << "#   slot     = your slot name, exactly as in your YAML\n"
                 << "#   password = room password, or leave blank\n"
-                << "#   discover = set to 1 to log every flag that flips to\n"
-                << "#              ac6ap_discovery.txt instead of sending AP checks\n"
-                << "#              (used to map missions -> trigger flags). Leave 0 to play.\n"
                 << "host=localhost\n"
                 << "port=38281\n"
                 << "slot=Player1\n"
                 << "password=\n"
-                << "discover=0\n"
-                << "#discover_ranges=3000-3500,4000-4100,6000-6500\n"
-                << "#   grant_all_parts = set to 1 to enable the F7 hotkey:\n"
-                << "#              press F7 while at the garage to unlock every part\n"
-                << "grant_all_parts=0\n";
+                << "#   ui_scale = size of the overlay + F8 settings window.\n"
+                << "#              1.0 = default. Try 1.5, 2.0, 3.0 for bigger.\n"
+                << "ui_scale=1.0\n";
         }
-        return cfg;  // defaults
+        return cfg;
     }
 
     std::string line;
@@ -105,28 +99,22 @@ static AC6Config LoadConfig(const std::string& path) {
         else if (key == "port")     cfg.port = val;
         else if (key == "slot")     cfg.slot = val;
         else if (key == "password") cfg.password = val;
-        else if (key == "discover")        cfg.discover = (val == "1" || val == "true");
-        else if (key == "discover_ranges") cfg.discoverRanges = val;
-        else if (key == "grant_all_parts") cfg.grantAllParts = (val == "1" || val == "true");
-        else if (key == "overlay")         cfg.overlay = !(val == "0" || val == "false");
+        else if (key == "ui_scale")        cfg.uiScale = (float)atof(val.c_str());
     }
     Log("Config loaded: host=%s port=%s slot=%s",
         cfg.host.c_str(), cfg.port.c_str(), cfg.slot.c_str());
     return cfg;
 }
 
-// Live config + path, so the in-game settings UI can persist + reconnect.
 static AC6Config  g_cfg;
 static std::string g_cfgPath;
 
-// archipelago.gg needs secure wss://; everything else (localhost, IPs) uses ws://.
 static std::string BuildUri(const std::string& host, const std::string& port) {
     std::string scheme = (host.find("archipelago.gg") != std::string::npos)
         ? "wss://" : "ws://";
     return scheme + host + ":" + port;
 }
 
-// Rewrite ac6ap.cfg from g_cfg (keeps the dev toggles as they were loaded).
 static void SaveConfig() {
     if (g_cfgPath.empty()) return;
     std::ofstream out(g_cfgPath);
@@ -137,15 +125,13 @@ static void SaveConfig() {
         << "port=" << g_cfg.port << "\n"
         << "slot=" << g_cfg.slot << "\n"
         << "password=" << g_cfg.password << "\n\n"
-        << "# Dev/debug toggles\n"
-        << "discover=" << (g_cfg.discover ? 1 : 0) << "\n"
-        << "grant_all_parts=" << (g_cfg.grantAllParts ? 1 : 0) << "\n"
-        << "overlay=" << (g_cfg.overlay ? 1 : 0) << "\n";
+        << "# Display\n"
+        << "ui_scale=" << g_cfg.uiScale << "\n";
     Log("Config saved to %s", g_cfgPath.c_str());
 }
 
 void AC6_ApplyConnection(const char* host, const char* port,
-                         const char* slot, const char* password) {
+    const char* slot, const char* password) {
     g_cfg.host = host ? host : "";
     g_cfg.port = port ? port : "";
     g_cfg.slot = slot ? slot : "";
@@ -185,7 +171,6 @@ void SetGarageVisited() {
 //  Signature: void AddItem(int* itemIdPtr, int quantity)
 //    rcx = pointer to the item ID, rdx = quantity.
 // 
-// I have no idea how this works.
 // ===========================================================================
 
 typedef void(*AddItemFunc)(int* itemIdPtr, int quantity);
@@ -226,7 +211,7 @@ void GrantItem(int itemId, int quantity) {
         return;
     }
 
-    itemBuf[0] = itemId;       // itemId at offset 0, rest of page is zero
+    itemBuf[0] = itemId;
 
     __try {
         g_AddItem(itemBuf, quantity);
@@ -245,14 +230,79 @@ void GrantItem(int itemId, int quantity) {
 }
 
 // ===========================================================================
+//  COAM (credits) granting - AC6's internal add-currency function
+//
+//  Ported from the TGA CT "AddSoul" script. Unlike AddItem, this AOB pattern
+//  matches the add-currency FUNCTION'S OWN BODY (a LEA-based add-and-store),
+//  not a CALL site — so the scanned address is directly callable, no
+//  relative-CALL resolution needed.
+//
+//  Signature: void AddCOAM(void* playerGameData, int32_t amount)
+//    rcx = PlayerGameData pointer (GameDataMan + 0x8), rdx = amount to add.
+// ===========================================================================
+
+typedef void(*AddCoamFunc)(void* playerGameData, int32_t amount);
+static AddCoamFunc g_AddCoam     = nullptr;
+static uintptr_t   g_gameDataMan = 0;
+
+void FindAddCoamFunction() {
+    // GameDataMan: RIP-relative mov, same resolution as EventFlagMan.
+    // AOB from TGA CT: ?? 8B 05 ?? ?? ?? ?? ?? 85 C0 ?? ?? ?? 8B 40 ?? C3
+    // The pointer operand is at offset 3, instruction length 7.
+    uintptr_t gdmResult = AOBScan("?? 8B 05 ?? ?? ?? ?? ?? 85 C0 ?? ?? ?? 8B 40 ?? C3");
+    if (!gdmResult) {
+        Log("GameDataMan pattern not found - COAM grants disabled");
+        return;
+    }
+    g_gameDataMan = ResolveRelativePointer(gdmResult, 3, 7);
+    Log("GameDataMan resolved to 0x%llX", g_gameDataMan);
+
+    uintptr_t addr = AOBScan("?? 8B ?? ?? ?? 8D 0C 10 ?? 89 4C ?? 10");
+    if (!addr) {
+        Log("AddCOAM pattern not found");
+        return;
+    }
+    g_AddCoam = (AddCoamFunc)addr;
+    Log("AddCOAM function resolved to 0x%llX", addr);
+
+    uint8_t* b = (uint8_t*)addr;
+    Log("AddCOAM first bytes: %02X %02X %02X %02X %02X %02X %02X %02X",
+        b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]);
+}
+
+void GrantCOAM(int32_t amount) {
+    if (!g_AddCoam || !g_gameDataMan) {
+        Log("GrantCOAM: not available (AddCoam=%p GameDataMan=0x%llX)",
+            (void*)g_AddCoam, (unsigned long long)g_gameDataMan);
+        return;
+    }
+
+    uintptr_t gdm = *(uintptr_t*)g_gameDataMan;
+    if (!gdm) { Log("GrantCOAM: GameDataMan not loaded yet"); return; }
+
+    void* playerGameData = *(void**)(gdm + 0x8);
+    if (!playerGameData) { Log("GrantCOAM: PlayerGameData null"); return; }
+
+    __try {
+        g_AddCoam(playerGameData, amount);
+        Log("Granted: %d COAM", amount);
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) {
+        Log("GrantCOAM: EXCEPTION granting %d COAM (code 0x%lX)",
+            amount, GetExceptionCode());
+    }
+}
+
+// ===========================================================================
 //  Grant queue + drain thread
 // ===========================================================================
 
 static std::mutex          g_grantMutex;
 static std::queue<int>     g_grantQueue;
+static std::mutex          g_coamMutex;
+static std::queue<int32_t> g_coamQueue;
 static std::atomic<bool>   g_grantThreadRunning{ false };
 
-// Gate set by the flag watcher: true only while a save is loaded and safe.
 static std::atomic<bool>   g_grantsSafe{ false };
 
 void SetGrantsSafe(bool safe) {
@@ -264,14 +314,33 @@ void QueueGrant(int itemId) {
     g_grantQueue.push(itemId);
 }
 
+void QueueGrantCOAM(int32_t amount) {
+    std::lock_guard<std::mutex> lk(g_coamMutex);
+    g_coamQueue.push(amount);
+}
+
 static void GrantDrainThread(void*) {
     Log("Grant drain thread started");
-    // Let the game settle after connect before granting anything.
     Sleep(1500);
 
     while (g_grantThreadRunning) {
-        // Hold everything until a save is loaded and in a safe state.
         if (!g_grantsSafe || !g_garageVisited) {
+            Sleep(250);
+            continue;
+        }
+
+        int32_t coamAmt = 0;
+        bool haveCoam = false;
+        {
+            std::lock_guard<std::mutex> lk(g_coamMutex);
+            if (!g_coamQueue.empty()) {
+                coamAmt = g_coamQueue.front();
+                g_coamQueue.pop();
+                haveCoam = true;
+            }
+        }
+        if (haveCoam) {
+            GrantCOAM(coamAmt);
             Sleep(250);
             continue;
         }
@@ -297,36 +366,6 @@ static void GrantDrainThread(void*) {
     }
 }
 
-// ===========================================================================
-//  Grant-all-parts hotkey (F7) — fills the garage with every part.
-//  Opt-in via grant_all_parts=1. Press F7 while at the garage/assembly menu
-//  so the game is in a safe state to receive items. Works in discovery mode.
-// ===========================================================================
-
-static void GrantAllPartsThread(void*) {
-    Log("Grant-all-parts: press F7 at the garage to unlock all %d parts.",
-        g_allPartsCount);
-    bool last = false;
-    while (true) {
-        bool pressed = (GetAsyncKeyState(VK_F7) & 0x8000) != 0;
-        if (pressed && !last) {
-            if (!g_AddItem) {
-                Log("F7: AddItem not ready yet — load into the garage first.");
-            } else {
-                Log("F7 pressed — granting all %d parts...", g_allPartsCount);
-                for (int i = 0; i < g_allPartsCount; i++) {
-                    GrantItem(g_allParts[i], 1);
-                    Sleep(40);   // space them out so the game keeps up
-                }
-                Log("F7: finished granting all parts. Back out and re-enter the "
-                    "assembly menu if they don't show immediately.");
-            }
-        }
-        last = pressed;
-        Sleep(50);
-    }
-}
-
 // F8 toggles the in-game Archipelago settings window (connect / change room).
 static void SettingsHotkeyThread(void*) {
     bool last = false;
@@ -338,9 +377,6 @@ static void SettingsHotkeyThread(void*) {
     }
 }
 
-// The game's main window: the largest owner-less top-level window of THIS
-// process that isn't one of our own overlay/settings windows. Visibility is
-// ignored (a minimised game still counts); uses no blocking calls.
 static HWND FindGameMainWindow() {
     struct C { HWND hwnd; long area; } ctx{ nullptr, 0 };
     EnumWindows([](HWND h, LPARAM lp) -> BOOL {
@@ -354,13 +390,10 @@ static HWND FindGameMainWindow() {
         auto* c = reinterpret_cast<C*>(lp);
         if (a > c->area) { c->area = a; c->hwnd = h; }
         return TRUE;
-    }, reinterpret_cast<LPARAM>(&ctx));
+        }, reinterpret_cast<LPARAM>(&ctx));
     return ctx.hwnd;
 }
 
-// If the game window is gone for a few seconds, the game has closed but our
-// threads are keeping the process (and its overlay/settings windows) alive, so
-// end the process.
 static void WatchdogThread(void*) {
     while (!FindGameMainWindow()) Sleep(1000);   // wait for the game window
     Log("Watchdog: tracking game window for shutdown.");
@@ -402,71 +435,45 @@ static void MainThread(void*) {
     }
     Log("Game initialised! Divisor: %d", divisor);
 
-    // Locate the AddItem function within game code
     FindAddItemFunction();
+    FindAddCoamFunction();
 
-    // F6 Bug testing
-    //#define TEST_ITEM_ID 65000000
+    // F6 — COAM grant test. Press F6 in-game to grant 50000 COAM.
+    // Remove once GameDataMan is confirmed working.
+    std::thread([]() {
+        bool last = false;
+        while (true) {
+            bool pressed = (GetAsyncKeyState(VK_F6) & 0x8000) != 0;
+            if (pressed && !last) {
+                Log("F6 pressed — granting test COAM (50000)");
+                GrantCOAM(50000);
+            }
+            last = pressed;
+            Sleep(50);
+        }
+    }).detach();
 
-    //std::thread([]() {
-    //    bool lastState = false;
-    //    while (true) {
-    //        bool pressed = (GetAsyncKeyState(VK_F6) & 0x8000) != 0;
-    //        if (pressed && !lastState) {
-    //            Log("F6 pressed — granting test item 0x%X", TEST_ITEM_ID);
-    //            GrantItem(TEST_ITEM_ID, 1);
-    //        }
-    //        lastState = pressed;
-    //        Sleep(50);
-    //    }
-    //    }).detach();
-
-    // Start the grant drain thread.
     g_grantThreadRunning = true;
     _beginthread(GrantDrainThread, 0, nullptr);
 
-    // End the process when the game closes (our threads/windows would otherwise
-    // keep armoredcore6.exe alive). Covers every mode, including discovery.
     _beginthread(WatchdogThread, 0, nullptr);
 
-    // Load connection settings from ac6ap.cfg, then connect.
     g_cfgPath = GetDllDir() + "ac6ap.cfg";
     AC6Config cfg = LoadConfig(g_cfgPath);
     g_cfg = cfg;
 
-    // F7 grant-all-parts hotkey is TEMPORARILY DISABLED: F7 sits right next to
-    // the F8 settings hotkey and is too easy to hit by accident. Re-enable by
-    // uncommenting (and `grant_all_parts=1` in the cfg) once F8 is settled.
-    // if (cfg.grantAllParts) {
-    //     _beginthread(GrantAllPartsThread, 0, nullptr);
-    // }
-    (void)GrantAllPartsThread;   // keep the function referenced while disabled
-
-    // Discovery mode: don't touch Archipelago at all — just log flag flips so we
-    // can map missions -> trigger flags in one playthrough.
-    if (cfg.discover) {
-        Log("discover=1 — running flag discovery (no AP connection / no checks).");
-        FlagWatcher_StartDiscovery(eventFlagMan, cfg.discoverRanges.c_str());
-        Log("Setup complete. Discovery logging to ac6ap_discovery.txt.");
-        while (true) Sleep(1000);
-        return;
-    }
-
     std::string uri = BuildUri(cfg.host, cfg.port);
     APClient_Connect(uri.c_str(), cfg.slot.c_str(), cfg.password.c_str());
 
-    // Start watching flags.
     FlagWatcher_Start(eventFlagMan);
 
-    // On-screen message feed for received items / completed checks.
-    if (cfg.overlay) {
-        Overlay_Start();
-        Overlay_Message(OVL_INFO, "Armored Core VI Archipelago connected");
-    }
+    Overlay_SetScale(cfg.uiScale);
+    Overlay_Start();
+    Overlay_Message(OVL_INFO, "Armored Core VI Archipelago connected");
 
-    // In-game settings window (F8) to connect / change room without a restart.
+    ConfigUI_SetScale(cfg.uiScale);
     ConfigUI_Start(cfg.host.c_str(), cfg.port.c_str(),
-                   cfg.slot.c_str(), cfg.password.c_str());
+        cfg.slot.c_str(), cfg.password.c_str());
     _beginthread(SettingsHotkeyThread, 0, nullptr);
 
     Log("Setup complete. Watching flags and granting received items.");
@@ -481,8 +488,42 @@ static void MainThread(void*) {
 //  DLL entry
 // ===========================================================================
 
+static void RotateLog(const std::string& dir, const std::string& logPath) {
+    WIN32_FILE_ATTRIBUTE_DATA fad;
+    if (!GetFileAttributesExA(logPath.c_str(), GetFileExInfoStandard, &fad))
+        return;
+
+    std::string logsDir = dir + "APLogs";
+    CreateDirectoryA(logsDir.c_str(), nullptr);
+
+    SYSTEMTIME st;
+    FILETIME   lt;
+    if (!(FileTimeToLocalFileTime(&fad.ftLastWriteTime, &lt) &&
+        FileTimeToSystemTime(&lt, &st)))
+        GetLocalTime(&st);
+
+    char name[80];
+    snprintf(name, sizeof(name), "ac6ap_%04d-%02d-%02d_%02d-%02d-%02d.txt",
+        st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+    std::string dest = logsDir + "\\" + name;
+
+    if (GetFileAttributesA(dest.c_str()) != INVALID_FILE_ATTRIBUTES) {
+        for (int i = 2; i < 1000; i++) {
+            char alt[96];
+            snprintf(alt, sizeof(alt), "ac6ap_%04d-%02d-%02d_%02d-%02d-%02d_%d.txt",
+                st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, i);
+            std::string cand = logsDir + "\\" + alt;
+            if (GetFileAttributesA(cand.c_str()) == INVALID_FILE_ATTRIBUTES) { dest = cand; break; }
+        }
+    }
+
+    MoveFileA(logPath.c_str(), dest.c_str());
+}
+
 static void OnLoad() {
-    std::string logPath = GetDllDir() + "ac6ap_log.txt";
+    std::string dir = GetDllDir();
+    std::string logPath = dir + "ac6ap_log.txt";
+    RotateLog(dir, logPath);
     g_logFile = _fsopen(logPath.c_str(), "w", _SH_DENYWR);
     Log("DLL loaded successfully (version %s)", AC6AP_VERSION);
     _beginthread(MainThread, 0, nullptr);

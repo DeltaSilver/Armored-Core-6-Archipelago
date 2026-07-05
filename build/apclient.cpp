@@ -4,6 +4,9 @@
 #include "partnames.h"
 #include "overlay.h"
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 #include <thread>
 #include <atomic>
@@ -15,8 +18,9 @@
 #include <sstream>
 #include <fstream>
 
-#include "easywsclient.hpp"
+#include "libs/easywsclient.hpp"
 using easywsclient::WebSocket;
+#include "shopslots.h"
 
 #define AC6AP_LOG_TAG "AP"
 
@@ -26,8 +30,6 @@ using easywsclient::WebSocket;
 #define AC6_COAM_OFFSET        1
 #define AC6_NGPLUS_OFFSET      2   // "NG+ Access" pass - logic gate, never granted
 #define AC6_NGPLUSPLUS_OFFSET  3   // "NG++ Access" pass - logic gate, never granted
-#define AC6_CHAPTER_OFF_LO     4   // "Chapter 2..5 Access" passes (offsets 4-7),
-#define AC6_CHAPTER_OFF_HI     7   // logic gates only, never granted in-game
 
 // ── Connection state ──────────────────────────────────────────────────────
 static std::atomic<bool>  g_apRunning{ false };
@@ -35,13 +37,12 @@ static std::thread        g_apThread;
 static WebSocket::pointer g_ws = nullptr;
 
 static std::string g_uri, g_slot, g_password;
-static std::mutex         g_connMutex;          // guards g_uri/g_slot/g_password
-static std::atomic<bool>  g_wantConnect{ false };// should we maintain a connection
+static std::mutex         g_connMutex;
+static std::atomic<bool>  g_wantConnect{ false };
 static std::atomic<bool>  g_forceReconnect{ false };
-static std::atomic<bool>  g_wsOpen{ false };     // socket connected
-static std::atomic<bool>  g_apConnected{ false };// AP "Connected" received
+static std::atomic<bool>  g_wsOpen{ false };
+static std::atomic<bool>  g_apConnected{ false };
 
-// Outgoing message queue
 static std::mutex               g_sendMutex;
 static std::queue<std::string>  g_sendQueue;
 
@@ -74,7 +75,6 @@ static std::string SentItemName(int recv, long long itemId) {
 }
 
 // Find "key":<number> at/after `from`, write value to `out`, advance `from`.
-// I honestly don't know how this works, it just does.
 static bool ExtractNextInt(const std::string& s, const std::string& key,
     size_t& from, long long& out) {
     std::string pat = "\"" + key + "\":";
@@ -113,7 +113,7 @@ static bool ExtractNextStr(const std::string& s, const std::string& key,
 static void ParseConnectedPlayers(const std::string& msg) {
     size_t pp = msg.find("\"players\":[");
     if (pp == std::string::npos) return;
-    size_t end = msg.find(']', pp);                 // player objects contain no ']'
+    size_t end = msg.find(']', pp);
     std::string arr = (end == std::string::npos) ? msg.substr(pp)
                                                   : msg.substr(pp, end - pp);
     size_t scan = 0; long long slot;
@@ -136,7 +136,7 @@ static void ParseConnectedPlayers(const std::string& msg) {
 // the (unescaped) string value if provided.
 static size_t SkipString(const std::string& s, size_t p, std::string* out) {
     std::string v;
-    p++;  // past opening quote
+    p++;
     while (p < s.size()) {
         char ch = s[p];
         if (ch == '\\') {
@@ -144,8 +144,8 @@ static size_t SkipString(const std::string& s, size_t p, std::string* out) {
             char e = s[p + 1];
             switch (e) {
                 case 'n': v += '\n'; break;  case 't': v += '\t'; break;
-                case 'u': p += 4; v += '?'; break;   // skip \uXXXX, placeholder
-                default:  v += e; break;             // " \ / etc -> literal
+                case 'u': p += 4; v += '?'; break;
+                default:  v += e; break;
             }
             p += 2;
         } else if (ch == '"') { p++; break; }
@@ -155,7 +155,6 @@ static size_t SkipString(const std::string& s, size_t p, std::string* out) {
     return p;
 }
 
-// p is at '{' or '['. Returns index of the matching close, or npos.
 static size_t MatchBrace(const std::string& s, size_t p) {
     char open = s[p], close = (open == '{') ? '}' : ']';
     int depth = 0;
@@ -174,7 +173,7 @@ static void ParseItemMap(const std::string& s, size_t bstart, size_t bend,
                          const std::string& game) {
     size_t ip = s.find("\"item_name_to_id\":{", bstart);
     if (ip == std::string::npos || ip >= bend) return;
-    size_t ob = ip + strlen("\"item_name_to_id\":");   // at '{'
+    size_t ob = ip + strlen("\"item_name_to_id\":");
     size_t cb = MatchBrace(s, ob);
     if (cb == std::string::npos || cb > bend) cb = bend;
 
@@ -201,7 +200,7 @@ static void ParseItemMap(const std::string& s, size_t bstart, size_t bend,
 static void ParseDataPackage(const std::string& msg) {
     size_t gp = msg.find("\"games\":{");
     if (gp == std::string::npos) return;
-    size_t ob = gp + strlen("\"games\":");   // at '{'
+    size_t ob = gp + strlen("\"games\":");
     size_t cb = MatchBrace(msg, ob);
     if (cb == std::string::npos) cb = msg.size();
 
@@ -227,7 +226,7 @@ static void ParseDataPackage(const std::string& msg) {
 static void ParseSlotInfo(const std::string& msg) {
     size_t sp = msg.find("\"slot_info\":{");
     if (sp == std::string::npos) return;
-    size_t ob = sp + strlen("\"slot_info\":");   // at '{'
+    size_t ob = sp + strlen("\"slot_info\":");
     size_t cb = MatchBrace(msg, ob);
     if (cb == std::string::npos) return;
 
@@ -327,25 +326,27 @@ int APClient_GetCycle() {
     return g_ngCycle;
 }
 
-// Run mode from slot_data: 0 single, 1 ng_plus_run, 2 ng_plus_run_cycled,
-// 3 full_run, 4 full_run_cycled.
 static int g_runMode = 0;
+
+static int g_batchesPerCh = 0;
 
 // How many NG cycles this mode spans (single=1, ng_plus_*=2, full_*=3).
 static int CyclesForMode(int mode) {
     switch (mode) {
-        case 1: case 2: return 2;   // ng_plus runs
-        case 3: case 4: return 3;   // full runs
-        default:        return 1;   // single (0) / unknown
+    case 1: case 2: return 2;   // ng_plus runs
+    case 3: case 4: return 3;   // full runs
+    default:        return 1;   // single (0) / unknown
     }
 }
 
-// The "_cycled" modes (2, 4) duplicate checks per cycle, so only they advance
-// the cycle counter. The others keep cycle 0 and dedupe re-fires server-side.
 static bool IsCycledMode(int mode) { return mode == 2 || mode == 4; }
 
 int APClient_GetRunMode() {
     return g_runMode;
+}
+
+int APClient_GetBatchesPerCh() {
+    return g_batchesPerCh;
 }
 
 int APClient_GetRequiredEndings() {
@@ -406,22 +407,28 @@ void APClient_SendGoal() {
 //  Granting received items
 // ===========================================================================
 
+// Amount granted per "COAM x50000" filler item, matching the item's name.
+#define AC6_COAM_AMOUNT 50000
+
 static void OnItemReceived(long long apItemId, int finder) {
     long long offset = apItemId - AC6_BASE_ID;
-    if (offset == AC6_VICTORY_OFFSET) { Log("Received Victory (no grant)"); return; }
-    if (offset == AC6_COAM_OFFSET) { Log("Received COAM filler (no grant)"); return; }
-    if (offset == AC6_NGPLUS_OFFSET || offset == AC6_NGPLUSPLUS_OFFSET) {
-        Log("Received NG cycle access pass (no grant)"); return;
-    }
-    if (offset >= AC6_CHAPTER_OFF_LO && offset <= AC6_CHAPTER_OFF_HI) {
-        Log("Received chapter access pass (no grant)"); return;
-    }
-    if (offset < 0) { Log("Item %lld out of range (skipped)", apItemId); return; }
 
     // "from <player>" only when someone else found it (not our own location).
     char from[96] = "";
     if (finder >= 0 && finder != g_slotNumber)
         snprintf(from, sizeof(from), "  (from %s)", PlayerName(finder).c_str());
+
+    if (offset == AC6_VICTORY_OFFSET) { Log("Received Victory (no grant)"); return; }
+    if (offset == AC6_COAM_OFFSET) {
+        Log("Queuing: %d COAM%s", AC6_COAM_AMOUNT, from);
+        Overlay_Message(OVL_RECEIVED, "Received  %d COAM%s", AC6_COAM_AMOUNT, from);
+        QueueGrantCOAM(AC6_COAM_AMOUNT);
+        return;
+    }
+    if (offset == AC6_NGPLUS_OFFSET || offset == AC6_NGPLUSPLUS_OFFSET) {
+        Log("Received NG cycle access pass (no grant)"); return;
+    }
+    if (offset < 0) { Log("Item %lld out of range (skipped)", apItemId); return; }
 
     const char* name = GetPartName((int)offset);
     if (name) {
@@ -435,11 +442,6 @@ static void OnItemReceived(long long apItemId, int finder) {
     QueueGrant((int)offset);
 }
 
-// Handle a ReceivedItems packet. The "index" field is the absolute position
-// of the first item in the player's overall received list; we only grant
-// items at positions >= what we've already processed, so reconnects (which
-// resend from index 0) never double-grant.
-// Future plan: replace this with more in-depth item logging
 static void HandleReceivedItems(const std::string& msg) {
     if (!g_receiveStateLoaded) LoadReceiveState();
 
@@ -467,9 +469,6 @@ static void HandleReceivedItems(const std::string& msg) {
     Log("ReceivedItems processed up to %d", g_processedItemCount);
 }
 
-// A PrintJSON "ItemSend" line: announce items WE found that go to someone else.
-// Shape: ...,"type":"ItemSend","receiving":<recv>,"item":{"item":..,"location":..,
-//        "player":<finder>,..}. We are the finder for things we send out.
 static void HandleItemSend(const std::string& msg) {
     size_t t = 0; long long recv = -1;
     ExtractNextInt(msg, "receiving", t, recv);
@@ -507,7 +506,7 @@ static void HandleMessage(const std::string& msg) {
             if (ep != std::string::npos) g_seedName = msg.substr(sp, ep - sp);
         }
         QueueMessage(MakeConnectPacket());
-        std::string dp = MakeDataPackageRequest(msg);   // names for items we send
+        std::string dp = MakeDataPackageRequest(msg);
         if (!dp.empty()) QueueMessage(dp);
     }
 
@@ -519,27 +518,34 @@ static void HandleMessage(const std::string& msg) {
     // Connected -> capture slot, load persisted grant count
     if (msg.find("\"cmd\":\"Connected\"") != std::string::npos) {
         size_t t = 0; long long slot = -1;
-        ExtractNextInt(msg, "slot", t, slot);   // top-level slot precedes players[]
+        ExtractNextInt(msg, "slot", t, slot);
         g_slotNumber = (int)slot;
         g_apConnected = true;
 
         // Run mode from slot_data (default single=0 if absent).
         size_t rm = 0; long long mode = 0;
         if (ExtractNextInt(msg, "run_mode", rm, mode)) g_runMode = (int)mode;
-        Log("Run mode: %d (0=single 1=ng+ 2=ng+cycled 3=full 4=full-cycled)", g_runMode);
+        Log("Run mode: %d (0=single 1=ng_plus_run 2=ng_plus_run_cycled "
+            "3=full_run 4=full_run_cycled)", g_runMode);
 
-        ParseConnectedPlayers(msg);   // slot -> name, for "from/to" overlay text
-        ParseSlotInfo(msg);           // slot -> game, to name items we send
+        // Batches per chapter: how many shop batch-unlock flags to write per
+        // chapter when its gate fires. 0 = shop disabled this seed.
+        size_t bm = 0; long long bpc = 0;
+        if (ExtractNextInt(msg, "batches_per_ch", bm, bpc))
+            g_batchesPerCh = (int)bpc;
+        Log("Shop batches per chapter: %d", g_batchesPerCh);
+
+        ParseConnectedPlayers(msg);
+        ParseSlotInfo(msg);
         LoadReceiveState();
         LoadCycle();
+        ParseShopSlots(msg);
     }
 
-    // ReceivedItems -> grant
     if (msg.find("\"cmd\":\"ReceivedItems\"") != std::string::npos) {
         HandleReceivedItems(msg);
     }
 
-    // Item we found that goes to another player -> "Sent to <player>"
     if (msg.find("\"type\":\"ItemSend\"") != std::string::npos) {
         HandleItemSend(msg);
     }
@@ -549,14 +555,11 @@ static void HandleMessage(const std::string& msg) {
 //  Websocket thread
 // ===========================================================================
 
-// The thread is persistent for the life of the DLL; whether it actually holds a
-// connection is gated on g_wantConnect, so Connect/Disconnect/Reconnect never
-// start or stop the thread (no restart races).
 static void APThread() {
     Log("AP thread started");
 
     while (g_apRunning) {
-        if (!g_wantConnect) {            // idle until something asks to connect
+        if (!g_wantConnect) {
             g_wsOpen = false; g_apConnected = false;
             Sleep(200);
             continue;
@@ -569,7 +572,7 @@ static void APThread() {
         g_wsOpen = false; g_apConnected = false;
         g_forceReconnect = false;
 
-        g_ws = WebSocket::from_url(uri);   // blocks during the TCP connect
+        g_ws = WebSocket::from_url(uri);
         if (!g_ws) {
             Log("AP: connect failed, retrying...");
             for (int i = 0; i < 50 && g_apRunning && g_wantConnect && !g_forceReconnect; i++)
@@ -599,7 +602,7 @@ static void APThread() {
         if (!g_wantConnect)  Log("AP: disconnected by request");
         else if (forced)     Log("AP: reconnecting (settings changed)");
         else {
-            Log("AP: connection lost");   // brief backoff before auto-reconnect
+            Log("AP: connection lost");
             for (int i = 0; i < 30 && g_apRunning && g_wantConnect && !g_forceReconnect; i++)
                 Sleep(100);
         }
@@ -616,6 +619,7 @@ static void ResetConnState() {
     g_seedName = "";
     g_processedItemCount = 0;
     g_receiveStateLoaded = false;
+    g_batchesPerCh = 0;
     g_playerNames.clear();
     g_slotGames.clear();
     g_itemNames.clear();
@@ -637,7 +641,7 @@ void APClient_Reconnect(const char* uri, const char* slot, const char* password)
     ResetConnState();
     g_apConnected = false;
     g_wantConnect = true;
-    g_forceReconnect = true;            // recycle if already connected
+    g_forceReconnect = true;
     Log("Connecting to AP server: %s as slot: %s", uri, slot);
     EnsureThread();
 }
@@ -662,6 +666,6 @@ int APClient_State() {
 void APClient_Disconnect() {
     g_wantConnect = false;
     g_apConnected = false;
-    g_forceReconnect = true;            // break the inner loop and drop the socket
+    g_forceReconnect = true;
     Log("Disconnect requested");
 }

@@ -6,18 +6,26 @@ from .items import (
     AC6ItemData, ITEM_TABLE, PART_NAMES, BASE_ID,
     VICTORY_OFFSET, COAM_OFFSET,
 )
+
+_SPECIAL_ITEMS = {"COAM x50000", "AC6 Victory", "NG+ Access", "NG++ Access"}
+PART_COUNT = sum(1 for n in ITEM_TABLE if n not in _SPECIAL_ITEMS)
+
 from .locations import (
-    AC6LocationData, LOCATION_TABLE, ARCHIVE_LOG_LOCATIONS, BASE_LOC_ID,
+    AC6LocationData, LOCATION_TABLE, BASE_LOC_ID,
     make_multiplier_locations, all_multiplier_locations,
     add_cycles, CYCLE_NAMES, NUM_CYCLES,
+    make_shop_locations, all_shop_locations,
+    SHOP_LOC_BASE, SHOP_FLAG_BASE, SHOP_SLOTS,
+    SHOP_CHAPTERS, SHOP_ITEMS_PER_CH, SHOP_ITEMS_PER_BATCH,
+    SHOP_BATCHES_PER_CH, SHOP_GATE_FLAGS, SHOP_BATCH_FLAG_BASE,
+    all_route_locations, active_route_locations, route_exclude_set,
 )
 from .options import AC6Options
 from .rules import set_rules
 from typing import Dict, Any, List
 
 
-# Items that must appear in sphere 1 so players can survive early.
-EARLY_ITEMS = []
+EARLY_ITEMS = ["VE-60SNA (L)"]
 
 
 class AC6Location(Location):
@@ -51,26 +59,47 @@ class ArmoredCore6World(World):
         name: data.code for name, data in ITEM_TABLE.items()
     }
 
-    # All possible locations need IDs registered, even ones a given seed
     location_name_to_id: Dict[str, int] = {
         name: data.code
-        for name, data in add_cycles({
-            **LOCATION_TABLE,
-            **all_multiplier_locations(),
-            **ARCHIVE_LOG_LOCATIONS,
-        }).items()
+        for name, data in {
+            **add_cycles({
+                **LOCATION_TABLE,
+                **all_multiplier_locations(),
+            }, exclude=route_exclude_set()),
+            **all_route_locations(),
+            **all_shop_locations(),
+        }.items()
     }
 
     # -- Option helpers --------------------------------------------------
 
-    def _archive_logs_on(self) -> bool:
-        return bool(self.options.archive_logs.value)
+    def _shop_checks_on(self) -> bool:
+        return bool(self.options.shop_checks.value)
+
+    def _compute_batches_per_ch(self) -> int:
+        if not self._shop_checks_on():
+            return 0
+        base = self._build_base_table(self._rank_count(), self._arena_count())
+        mult = self._multiplier()
+        if mult > 1:
+            base.update(make_multiplier_locations(mult, base))
+        if self._dup_checks():
+            base = add_cycles(base, self._num_cycles(), exclude=route_exclude_set())
+            base.update(active_route_locations(self._num_cycles()))
+        gap = PART_COUNT - (len(base) - (self._num_cycles() - 1))
+        if gap <= 0:
+            return 0
+        return min((gap + 99) // 100, SHOP_BATCHES_PER_CH)
+
+    def _rank_count(self) -> int:
+        return int(self.options.mercenary_rank_checks.value)
+
+    def _arena_count(self) -> int:
+        return int(self.options.arena_checks.value)
 
     def _multiplier(self) -> int:
         return int(self.options.mission_reward_multiplier.value)
 
-    # run_mode: 0 single, 1 ng_plus_run, 2 ng_plus_run_cycled,
-    #           3 full_run, 4 full_run_cycled
     _CYCLES_PER_MODE = {0: 1, 1: 2, 2: 2, 3: 3, 4: 3}
     _CYCLED_MODES = {2, 4}
 
@@ -78,26 +107,43 @@ class ArmoredCore6World(World):
         return int(self.options.run_mode.value)
 
     def _num_cycles(self) -> int:
-        # single = 1 (NG), ng_plus_* = 2 (NG->NG+), full_* = 3 (NG->NG+->NG++).
         return self._CYCLES_PER_MODE[self._run_mode()]
 
     def _dup_checks(self) -> bool:
-        # The "_cycled" modes give each cycle its own copy of the story checks.
         return self._run_mode() in self._CYCLED_MODES
 
-    def _active_locations(self) -> Dict[str, AC6LocationData]:
-        locs = dict(LOCATION_TABLE)
+    def _build_base_table(self, rank_count: int,
+                           arena_count: int) -> Dict[str, AC6LocationData]:
+        rank_seen = arena_seen = 0
+        base: Dict[str, AC6LocationData] = {}
+        for name, d in LOCATION_TABLE.items():
+            if d.region == "Ranks":
+                if rank_seen < rank_count:
+                    base[name] = d
+                    rank_seen += 1
+            elif d.region == "Arena":
+                if arena_seen < arena_count:
+                    base[name] = d
+                    arena_seen += 1
+            else:
+                base[name] = d
+        return base
+
+    def _mission_locations(self) -> Dict[str, AC6LocationData]:
+        base = self._build_base_table(self._rank_count(), self._arena_count())
         mult = self._multiplier()
         if mult > 1:
-            locs.update(make_multiplier_locations(mult))
-        if self._archive_logs_on():
-            locs.update(ARCHIVE_LOG_LOCATIONS)
-        # Branch-reserved and collapsed (co-firing) story counters are simply not
-        # in LOCATION_TABLE anymore, so nothing to filter here: every entry is a
-        # real one-check-per-mission location that fires on the route.
-        # Cycled modes duplicate the story checks across this run's cycle count.
+            base.update(make_multiplier_locations(mult, base))
         if self._dup_checks():
-            return add_cycles(locs, self._num_cycles())
+            base = add_cycles(base, self._num_cycles(), exclude=route_exclude_set())
+            base.update(active_route_locations(self._num_cycles()))
+        return base
+
+    def _active_locations(self) -> Dict[str, AC6LocationData]:
+        locs = self._mission_locations()
+        bpc = self._compute_batches_per_ch()
+        if bpc > 0:
+            locs.update(make_shop_locations(bpc))
         return locs
 
     # -- AP world interface ----------------------------------------------
@@ -108,16 +154,13 @@ class ArmoredCore6World(World):
                 self.multiworld.early_items[self.player][item_name] = 1
 
     def create_regions(self) -> None:
-        # One set of Chapter 1-5 regions per NG cycle, plus shared Arena/Ranks.
-        # Cycle 0 (NG) regions are unprefixed ("Chapter 1"); NG+/NG++ are
-        # prefixed ("NG+ Chapter 1", ...).
         def chapter_region(cycle: int, chapter: int) -> str:
             prefix = "" if cycle == 0 else f"{CYCLE_NAMES[cycle]} "
             return f"{prefix}Chapter {chapter}"
 
-        ncyc = self._num_cycles()   # 1 for single, NUM_CYCLES for full runs
+        ncyc = self._num_cycles()
 
-        region_names = ["Menu", "Arena", "Ranks"]
+        region_names = ["Menu", "Arena", "Ranks"] + [f"Shop Ch{c}" for c in range(1, SHOP_CHAPTERS + 1)]
         for cyc in range(ncyc):
             for ch in range(1, 6):
                 region_names.append(chapter_region(cyc, ch))
@@ -128,37 +171,41 @@ class ArmoredCore6World(World):
             regions[name] = r
             self.multiworld.regions.append(r)
 
-        # Place all active locations into their regions.
         for loc_name, loc_data in self._active_locations().items():
             region = regions[loc_data.region]
-            location = AC6Location(
-                self.player, loc_name, loc_data.code, region
-            )
+            location = AC6Location(self.player, loc_name, loc_data.code, region)
             region.locations.append(location)
 
-        # Goal event locations -- locked Victory items, no AP item ID. Each
-        # route's ending happens in its own NG cycle (A=NG, B=NG+, C=NG++); a
-        # single run only has the first ending. The completion condition uses
-        # the Victory count (see generate_basic).
+        # Locked Victory event per cycle ending
         route_names = ["Route A Clear", "Route B Clear", "Route C Clear"]
         for cyc in range(ncyc):
             reg = regions[chapter_region(cyc, 5)]
             loc = AC6Location(self.player, route_names[cyc], None, reg)
             loc.place_locked_item(
-                AC6Item("Victory", ItemClassification.progression,
-                        None, self.player)
+                AC6Item("Victory", ItemClassification.progression, None, self.player)
             )
             reg.locations.append(loc)
 
-        # Connect regions. Within a cycle the chapters chain 1->2->...->5; the
-        # last chapter of a cycle leads into the next cycle's first chapter.
-        # No item-based hard gates exist in AC6, so a linear chain is both
-        # correct (everything stays reachable) and robust to per-chapter mission
-        # counts (which vary and differ again in NG+/NG++).
+        # Locked Chapter N Complete event per chapter (1-4) per cycle.
+        # Gates the next chapter entrance and puts each chapter in its own sphere.
+        for cyc in range(ncyc):
+            for ch in range(1, 5):
+                reg = regions[chapter_region(cyc, ch)]
+                ev_name = f"{chapter_region(cyc, ch)} Complete"
+                loc = AC6Location(self.player, ev_name, None, reg)
+                loc.place_locked_item(
+                    AC6Item(ev_name, ItemClassification.progression, None, self.player)
+                )
+                reg.locations.append(loc)
+
+        # Region connections
         menu = regions["Menu"]
         menu.connect(regions[chapter_region(0, 1)], "Menu -> Chapter 1")
         menu.connect(regions["Arena"], "Menu -> Arena")
         menu.connect(regions["Ranks"], "Menu -> Ranks")
+        menu.connect(regions["Shop Ch1"], "Menu -> Shop Ch1")
+        for c in range(2, SHOP_CHAPTERS + 1):
+            menu.connect(regions[f"Shop Ch{c}"], f"Menu -> Shop Ch{c}")
         for cyc in range(ncyc):
             for ch in range(1, 5):
                 a = regions[chapter_region(cyc, ch)]
@@ -170,42 +217,28 @@ class ArmoredCore6World(World):
                     f"{chapter_region(cyc, 5)} -> {chapter_region(cyc + 1, 1)}")
 
     def create_items(self) -> None:
+        self._cached_bpc = self._compute_batches_per_ch()
         location_count = len(self._active_locations())
-
         items: List[AC6Item] = []
 
-        # Logic-gate passes (progression). rules.py gates regions on these so the
-        # solver sees AC6 as ordered early->late instead of one flat sphere:
-        #  - Cycle passes: one per extra NG cycle (gate NG+/NG++).
-        #  - Chapter passes: gate Chapter 2..5 within every cycle, so Chapter 1
-        #    (+ first arena/rank) is sphere 0 and later chapters come later. This
-        #    is what lets the multiworld place other games' early items in AC6's
-        #    early game.
+        # Cycle-access passes
         cycle_passes = ["NG+ Access", "NG++ Access"][: self._num_cycles() - 1]
-        chapter_passes = ["Chapter 2 Access", "Chapter 3 Access",
-                          "Chapter 4 Access", "Chapter 5 Access"]
-        for name in cycle_passes + chapter_passes:
+        for name in cycle_passes:
             items.append(self.create_item(name))
 
-        # Candidate part pool (parts only; never the special items).
+        # Part pool (shuffled; EARLY_ITEMS pushed to front)
         pool_names: List[str] = [
             name for name in ITEM_TABLE
-            if name not in ("COAM x10000", "AC6 Victory", "NG+ Access", "NG++ Access")
+            if name not in ("COAM x50000", "AC6 Victory", "NG+ Access", "NG++ Access")
         ]
-
-        # Shuffle with the seeded world RNG so the chosen subset varies
-        # across all part types, deterministically per seed.
         self.random.shuffle(pool_names)
-
-        # Guarantee priority/early items survive the slice.
         for prio in reversed(EARLY_ITEMS):
             if prio in pool_names:
                 pool_names.remove(prio)
                 pool_names.insert(0, prio)
 
-        # Fill the remaining locations with parts, then COAM filler.
         for i in range(location_count - len(items)):
-            name = pool_names[i] if i < len(pool_names) else "COAM x10000"
+            name = pool_names[i] if i < len(pool_names) else "COAM x50000"
             items.append(self.create_item(name))
 
         self.multiworld.itempool += items
@@ -218,21 +251,42 @@ class ArmoredCore6World(World):
         set_rules(self, self.multiworld, self.player)
 
     def get_filler_item_name(self) -> str:
-        return "COAM x10000"
+        return "COAM x50000"
 
     def generate_basic(self) -> None:
-        # Victory items needed = cycle count: single=1 (any ending),
-        # ng_plus_*=2 (NG + NG+ endings), full_*=3 (all three endings).
         need = self._num_cycles()
         self.multiworld.completion_condition[self.player] = (
             lambda state, n=need: state.has("Victory", self.player, n)
         )
 
     def fill_slot_data(self) -> Dict[str, Any]:
-        return {
+        slot_data: Dict[str, Any] = {
             "game_version": "1.0",
-            "archive_logs": self._archive_logs_on(),
             "mission_reward_multiplier": self._multiplier(),
             "run_mode": self._run_mode(),
             "death_link": False,
+            "batches_per_ch": getattr(self, "_cached_bpc", self._compute_batches_per_ch()),
         }
+
+        bpc = getattr(self, "_cached_bpc", self._compute_batches_per_ch())
+        if bpc > 0:
+            player_name = self.multiworld.get_player_name(self.player)
+            slots = []
+            items_per_ch = bpc * SHOP_ITEMS_PER_BATCH
+            for ch in range(SHOP_CHAPTERS):
+                for i in range(items_per_ch):
+                    slot_0 = ch * SHOP_ITEMS_PER_CH + i
+                    loc_name = f"[Ch{ch + 1}] Shop Item {i + 1}"
+                    location = self.multiworld.get_location(loc_name, self.player)
+                    item_name = (location.item.name
+                                 if location.item is not None else "Unknown")
+                    slots.append({
+                        "slot":         slot_0,
+                        "chapter":      ch + 1,
+                        "display_name": f"{player_name}'s {item_name}",
+                        "ap_loc_id":    SHOP_LOC_BASE + slot_0,
+                        "flag_id":      SHOP_FLAG_BASE + slot_0,
+                    })
+            slot_data["shop_slots"] = slots
+
+        return slot_data

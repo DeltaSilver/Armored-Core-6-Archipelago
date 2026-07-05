@@ -6,6 +6,7 @@ integration for the [Archipelago](https://archipelago.gg/) multiworld randomizer
 Story missions, arena fights, and mercenary-rank milestones send Archipelago
 checks; the AC parts you receive are shuffled across the whole multiworld.
 
+
 ## Requirements
 
 - Armored Core VI: Fires of Rubicon (Steam)

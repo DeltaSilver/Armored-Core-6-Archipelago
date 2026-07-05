@@ -25,14 +25,13 @@ Two halves talk to each other over a standard Archipelago connection:
   **grants AC parts** the player receives by calling the game's own add-item
   function. It does not modify game code - it reads memory and calls one function.
   It also draws a small **on-screen overlay** (`overlay.cpp`) listing received
-  items and completed checks - a separate layered top-most GDI window, *not* a
-  renderer hook, so it cannot crash the game or clash with ModEngine2 (shows in
+  items and completed checks - a separate layered top-most window. (shows in
   borderless/windowed mode only).
 - **`worlds/armored_core_6`** is the Python AP world. It defines the item pool,
   the location IDs, the regions/rules, and the slot options. It never touches the
   game directly.
-- **`regulation.bin`** (shipped with the release, not in this repo) is the modded
-  param file that removes parts from the normal economy so they arrive from AP.
+- **`regulation.bin, msg/, and event/`** are the modded param files
+  that removes parts from the normal economy so they arrive from AP.
 
 ---
 
@@ -78,7 +77,7 @@ documented in [`FLAG_REFERENCE.md`](FLAG_REFERENCE.md). Categories:
 the part ID at offset 0, and calls `AddItem`, wrapped in `__try/__except`. Grants
 are queued (`QueueGrant`) and drained one at a time by `GrantDrainThread`, gated
 on a live save and the first-garage-visit flag (`3409`). Part IDs ↔ names live in
-`partnames.h`; `allparts.h` is the full list used by the F7 unlock hotkey.
+`partnames.h`.
 
 ---
 
@@ -170,23 +169,12 @@ naming is a Python-side concern with no DLL impact.
 | File | Contents |
 |------|----------|
 | `ac6ap_log.txt` | Timestamped diagnostic log (overwritten each launch) |
-| `ac6ap_checks.txt` | Every check sent, with its mission name, cycle, and location ID (append mode, survives restarts). For confirming a mission fired the right check / reporting mismatches. |
 | `ac6ap_recv_<seed>_<slot>.txt` | Count of received items already granted |
 | `ac6ap_cycle_<seed>_<slot>.txt` | Current NG cycle (0/1/2) |
-| `ac6ap_discovery.txt` | Flag-flip log, only when `discover=1` (append mode) |
 
 ---
 
 ## Config (ac6ap.cfg)
 
 Read by `LoadConfig`; a default is written if missing. Keys: `host`, `port`,
-`slot`, `password`, plus the dev toggles `discover`, `discover_ranges`,
-`grant_all_parts`. See [`mods/ac6ap/ac6ap.cfg`](mods/ac6ap/ac6ap.cfg).
-
-### Discovery mode
-
-`discover=1` skips Archipelago entirely and runs `FlagWatcher_StartDiscovery`,
-which scans the configured ranges every poll and logs each flag that flips to
-`ac6ap_discovery.txt`. This is how the flag map in
-[`FLAG_REFERENCE.md`](FLAG_REFERENCE.md) was produced; one instrumented
-playthrough per route reveals which flags each mission sets.
+`slot`, `password`.

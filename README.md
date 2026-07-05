@@ -1,55 +1,127 @@
 # Armored Core 6 Archipelago
-An archipelago multiworld for Armored Core VI. Story, arena, and mercenary-rank
-progress send Archipelago checks; the AC parts you receive are shuffled across
-the multiworld.
 
-## Save Data
-This mod is meant for a **fresh save**. It doesn't create a separate save file
-yet, so set your real save aside before playing and restore it afterwards.
+An [Armored Core VI: Fires of Rubicon](https://store.steampowered.com/app/1888160/)
+integration for the [Archipelago](https://archipelago.gg/) multiworld randomizer.
 
-1. **Back up your save.** Go to
-   `C:\Users\<User>\AppData\Roaming\ArmoredCore6\<your-steam-id>\`
-2. Move `AC60000.sl2` to another folder so the game makes a
-   new save.
+Story missions, arena fights, and mercenary-rank milestones send Archipelago
+checks; the AC parts you receive are shuffled across the whole multiworld.
 
-## Instructions
 
-1. **Set up ModEngine2.** Download
-   [ModEngine2](https://github.com/soulsmods/ModEngine2/releases) and confirm
-   it launches the game normally before adding the mod.
+## Requirements
+
+- Armored Core VI: Fires of Rubicon (Steam)
+- [ModEngine2](https://github.com/soulsmods/ModEngine2/releases) - loads the mod DLL
+- [Archipelago](https://archipelago.gg/)
+
+## Components
+
+| Component | Path | Description |
+|-----------|------|-------------|
+| AP World | [`worlds/armored_core_6/`](worlds/armored_core_6) | Archipelago world definition - install into your AP `worlds/` folder or package as `.apworld` |
+| Mod folder | [`mods/ac6ap/`](mods/ac6ap) | The files that go into your ModEngine2 `mod/` directory (`ac6ap.cfg`, the built `ac6ap.dll`, `regulation.bin`) |
+
+## Setup
+
+> **Use a throwaway save.** This mod is meant for a dedicated playthrough. Back up
+> `AC60000.sl2` in `C:\Users\<User>\AppData\Roaming\ArmoredCore6\<your-steam-id>\`
+> and move it aside so the game makes a new save; restore it afterwards.
+
+1. **Set up ModEngine2** and confirm it launches the game normally first.
 2. **Copy the [mod](https://github.com/DeltaSilver/Armored-Core-6-Archipelago/releases) files** into your ModEngine2 `mod` folder:
    - `ac6ap.dll`
    - `ac6ap.cfg`
    - `regulation.bin`
-3. **Register the DLL.** Open `config_armoredcore6.toml` and add `ac6ap.dll`
-   to the `external_dlls` list:
-```toml
+   - `event/`
+   - `msg/`
+4. **Register the DLL** in `config_armoredcore6.toml`:
+   ```toml
    external_dlls = ["mod/ac6ap.dll"]
-```
-4. **Edit `ac6ap.cfg`** with your connection details:
+   ```
+5. **Launch through ME2** with `launchmod_armoredcore6.bat` - never from Steam directly.
 
-5. **Launch through ME2.** Run `launchmod_armoredcore6.bat`. Do **not** launch
-   from Steam directly, it must start through ModEngine2 for the mod to load.
+`slot` in `ac6ap.cfg` must match the `name` in your YAML exactly. A log file
+(`ac6ap_log.txt`) appears in the mod folder - check it if the mod doesn't connect.
 
-## Important Notes
-- `slot` must match the `name` in your YAML **exactly** (same spelling and
-  capitalisation).
-- Leave `password` blank if the room has no password.
-- If you already use a modified `regulation.bin` for another mod, merge the
-  changes rather than overwrite it.
-- A log file (`ac6ap_log.txt`) appears in the mod folder — check it if the
-  mod doesn't connect.
-- Always back up before deleting anything. `AC60000.sl2` is the only
-  way to recover your progress.
-- Don't run the mod on your main save; Archipelago is meant for a dedicated
-  playthrough.
+**Connecting in-game:** press **F8** to open the Archipelago settings window, where
+you can set Host / Port / Slot / Password and hit **Connect** alternatively, you can edit `ac6ap.cfg`. 
+It saves your entries back to `ac6ap.cfg` and reconnects without restarting.
 
-## Notes / Known Limits
-- Item-acquisition notifications don't pop on screen; check your AP text client to
-  see what you received. Parts appear in the assembly menu (back out and
-  re-enter the menu if you don't see one immediately).
-- Shop-purchase checks are not in this build. Checks come from story, key
-  missions, arena, and mercenary ranks (plus optional archive logs).
-- The `archive_logs` option relies on archive collection flags that are still
-  being verified; treat that option as experimental for now.
-- Crashing during a mission will remove all items recived during that mission.
+---
+
+<details>
+<summary>Run Modes</summary>
+
+AC6's story flags reset on every New Game cycle, so the same missions can be
+replayed in NG+ and NG++. `run_mode` in your YAML chooses how the run is scoped:
+
+| Mode | Cycles played | Goal | Story checks |
+|------|---------------|------|--------------|
+| `single` | NG | reach any one ending | NG only |
+| `ng_plus_run` | NG → NG+ | reach both of the first two endings | each mission once |
+| `ng_plus_run_cycled` | NG → NG+ | both endings | each mission, **per cycle** (~2×) |
+| `full_run` | NG → NG+ → NG++ | all three endings | each mission once |
+| `full_run_cycled` | NG → NG+ → NG++ | all three endings | each mission, **per cycle** (~3×) |
+
+The `*_cycled` modes give each playthrough cycle its own independent set of
+mission checks; the others fire each check once and use NG+/NG++ only to reach
+the later endings.
+
+</details>
+
+<details>
+<summary>Locations (Checks)</summary>
+
+- **Story missions** - one check per mission cleared, named after the mission
+  (Operation Wallclimber, Destroy the Ice Worm, …). Internally these are
+  per-chapter completion counters, so a name is the mission that fills that slot
+  on the normal route; branch decision points are shown as "A/B" (e.g. Eliminate
+  the Enforcement Squads/Destroy the Special Forces Craft).
+- **Key missions** - 10 named story-milestone checks (Mining Ship & Dam, Defeat
+  Ice Worm, Prison Break, …).
+- **Mercenary ranks** - reach each merc rank 1-17.
+- **Arena** - clear Arena ranks F → S.
+- **Archive logs** - optional collectible checks (experimental; off by default).
+
+A single run follows one route, so branch-reserved missions that never fire are
+trimmed from `single` seeds; multi-cycle runs revisit them across cycles. See
+[`FLAG_REFERENCE.md`](FLAG_REFERENCE.md) for the exact flags.
+
+</details>
+
+<details>
+<summary>Items</summary>
+
+The item pool is the AC parts catalogue (~314 parts), shuffled across the
+multiworld. Filler is `COAM x50000`. Received parts appear in the assembly menu
+(back out and re-enter if one doesn't show immediately).
+
+`mission_reward_multiplier` (1×-4×) controls how many item checks each
+objective awards.
+
+</details>
+
+<details>
+<summary>Options</summary>
+
+| Option | Values | Description |
+|--------|--------|-------------|
+| `run_mode` | single / ng_plus_run / ng_plus_run_cycled / full_run / full_run_cycled | How many NG cycles the run spans and whether each cycle has its own checks |
+| `mission_reward_multiplier` | 1-4 | Item checks awarded per objective |
+| `archive_logs` | off / on | Add the archive-log collectibles as checks (experimental) |
+
+</details>
+
+---
+
+## Notes / known limits
+
+- An on-screen feed (top-left) shows items you receive,
+  checks you complete, and items you send to other players.
+  It is a separate top-most overlay window, so it shows in
+  **borderless/windowed** mode, not exclusive fullscreen.
+  
+- Some missions and training will still grant items.
+  
+- Crashing during a mission removes items received during that mission.
+
+- `AC60000.sl2` is the only way to recover progress - always back up first.

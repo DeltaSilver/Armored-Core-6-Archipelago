@@ -1,0 +1,37 @@
+# Python (AP world)
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.apworld
+
+# C++ / MSVC build outputs (under build/)
+build/x64/
+build/ac6ap/
+build/*.user
+*.obj
+*.pdb
+*.ipdb
+*.iobj
+*.exp
+*.ilk
+*.log
+*.tlog
+
+# Compiled / placed mod binaries
+mods/ac6ap/ac6ap.dll
+mods/ac6ap/regulation.bin
+
+# Runtime files the DLL writes into the mod folder
+mods/ac6ap/ac6ap_log.txt
+mods/ac6ap/ac6ap_discovery.txt
+mods/ac6ap/ac6ap_recv_*.txt
+mods/ac6ap/ac6ap_cycle_*.txt
+
+# IDE
+.vs/
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

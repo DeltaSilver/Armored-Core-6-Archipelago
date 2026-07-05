@@ -36,11 +36,11 @@ mod/
 ├── event/
 └── msg/
 ```
-4. **Register the DLL** in `config_armoredcore6.toml`:
+3. **Register the DLL** in `config_armoredcore6.toml`:
    ```toml
    external_dlls = ["mod/ac6ap.dll"]
    ```
-5. **Launch through ME2** with `launchmod_armoredcore6.bat` - never from Steam directly.
+4. **Launch through ME2** with `launchmod_armoredcore6.bat` - never from Steam directly.
 
 `slot` in `ac6ap.cfg` must match the `name` in your YAML exactly. A log file
 (`ac6ap_log.txt`) appears in the mod folder - check it if the mod doesn't connect.

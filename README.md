@@ -18,10 +18,6 @@ checks; the AC parts you receive are shuffled across the whole multiworld.
 |-----------|------|-------------|
 | AP World | [`worlds/armored_core_6/`](worlds/armored_core_6) | Archipelago world definition - install into your AP `worlds/` folder or package as `.apworld` |
 | Mod folder | [`mods/ac6ap/`](mods/ac6ap) | The files that go into your ModEngine2 `mod/` directory (`ac6ap.cfg`, the built `ac6ap.dll`, `regulation.bin`) |
-| DLL source | [`build/`](build) | C++ source for `ac6ap.dll` and how to compile it - see [`build/BUILDING.md`](build/BUILDING.md) |
-
-For how the DLL talks to the game and the server, see [`CODE_REFERENCE.md`](CODE_REFERENCE.md).
-For the full event-flag map, see [`FLAG_REFERENCE.md`](FLAG_REFERENCE.md).
 
 ## Setup
 
@@ -30,11 +26,12 @@ For the full event-flag map, see [`FLAG_REFERENCE.md`](FLAG_REFERENCE.md).
 > and move it aside so the game makes a new save; restore it afterwards.
 
 1. **Set up ModEngine2** and confirm it launches the game normally first.
-2. **Build `ac6ap.dll`** from [`build/`](build) (see [`build/BUILDING.md`](build/BUILDING.md)), or grab it from the mod release.
-3. **Copy the mod files** into your ModEngine2 `mod/` folder:
-   - `ac6ap.dll` (built)
-   - `ac6ap.cfg` (from [`mods/ac6ap/`](mods/ac6ap) - edit with your room details)
-   - `regulation.bin` (from the mod release)
+2. **Copy the [mod](https://github.com/DeltaSilver/Armored-Core-6-Archipelago/releases) files** into your ModEngine2 `mod` folder:
+   - `ac6ap.dll`
+   - `ac6ap.cfg`
+   - `regulation.bin`
+   - `event/`
+   - `msg/`
 4. **Register the DLL** in `config_armoredcore6.toml`:
    ```toml
    external_dlls = ["mod/ac6ap.dll"]
@@ -45,10 +42,8 @@ For the full event-flag map, see [`FLAG_REFERENCE.md`](FLAG_REFERENCE.md).
 (`ac6ap_log.txt`) appears in the mod folder - check it if the mod doesn't connect.
 
 **Connecting in-game:** press **F8** to open the Archipelago settings window, where
-you can set Host / Port / Slot / Password and hit **Connect** without editing the
-cfg or restarting. It saves your entries back to `ac6ap.cfg` and reconnects live,
-so you can also fix a typo or switch rooms mid-session. (Borderless/windowed mode;
-it takes keyboard focus while open.)
+you can set Host / Port / Slot / Password and hit **Connect** alternatively, you can edit `ac6ap.cfg`. 
+It saves your entries back to `ac6ap.cfg` and reconnects without restarting.
 
 ---
 
@@ -96,15 +91,8 @@ trimmed from `single` seeds; multi-cycle runs revisit them across cycles. See
 <summary>Items</summary>
 
 The item pool is the AC parts catalogue (~314 parts), shuffled across the
-multiworld. Filler is `COAM x10000`. Received parts appear in the assembly menu
+multiworld. Filler is `COAM x50000`. Received parts appear in the assembly menu
 (back out and re-enter if one doesn't show immediately).
-
-The pool also includes small auto-managed `Chapter 2..5 Access` (and, on
-multi-cycle modes, `NG+`/`NG++ Access`) progression items. These are logic gates
-only - the mod never grants anything for them in-game. They make AC6 an ordered
-early-to-late game in the multiworld's logic, so Chapter 1 is "early" and the
-finale is "late". That keeps other games' early items in AC6's early chapters and
-their late items out of your endgame. You never configure them.
 
 `mission_reward_multiplier` (1×-4×) controls how many item checks each
 objective awards.
@@ -122,30 +110,17 @@ objective awards.
 
 </details>
 
-<details>
-<summary>Dev / debug toggles (ac6ap.cfg)</summary>
-
-These live in `ac6ap.cfg`, are off by default, and don't affect normal play:
-
-- `discover=1` - log every event flag that flips to `ac6ap_discovery.txt`
-  instead of connecting to Archipelago. Used to map missions to their trigger
-  flags in a single playthrough.
-- `grant_all_parts=1` - enables an **F7** hotkey: press F7 at the garage to add
-  every AC part to your inventory.
-
-</details>
-
 ---
 
 ## Notes / known limits
 
-- An on-screen feed (top-left) shows items you receive (with who sent them),
-  checks you complete, and items you send to other players (named via the AP
-  DataPackage). It is a separate top-most overlay window, so it shows in
-  **borderless/windowed** mode (the default), not exclusive fullscreen; set
-  `overlay=0` in `ac6ap.cfg` to disable it. The AP text client remains the full
-  record.
-- Shop-purchase checks are not implemented. Checks come from story, key missions,
-  arena, and mercenary ranks (plus optional archive logs).
+- An on-screen feed (top-left) shows items you receive,
+  checks you complete, and items you send to other players.
+  It is a separate top-most overlay window, so it shows in
+  **borderless/windowed** mode, not exclusive fullscreen.
+  
+- Some missions and training will still grant items.
+  
 - Crashing during a mission removes items received during that mission.
+
 - `AC60000.sl2` is the only way to recover progress - always back up first.

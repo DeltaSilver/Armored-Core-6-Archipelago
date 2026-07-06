@@ -22,10 +22,6 @@ class RunMode(Choice):
     own set of checks.
 
     single:             one playthrough, any ending completes the goal.
-    ng_plus_run:        NG → NG+, each mission checks once total.
-    ng_plus_run_cycled: NG → NG+, each mission fires a separate check per cycle.
-    full_run:           NG → NG+ → NG++, each mission checks once total.
-    full_run_cycled:    NG → NG+ → NG++, each mission fires a separate check per cycle.
     """
     display_name = "Run Mode"
     option_single             = 0

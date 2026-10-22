@@ -13,7 +13,7 @@ PART_COUNT = sum(1 for n in ITEM_TABLE if n not in _SPECIAL_ITEMS)
 from .locations import (
     AC6LocationData, LOCATION_TABLE, BASE_LOC_ID,
     make_multiplier_locations, all_multiplier_locations,
-    add_cycles, CYCLE_NAMES, NUM_CYCLES,
+    add_cycles, CYCLE_NAMES, NUM_CYCLES, CHAPTER_PARTS,
     make_shop_locations, all_shop_locations,
     SHOP_LOC_BASE, SHOP_FLAG_BASE, SHOP_SLOTS,
     SHOP_CHAPTERS, SHOP_ITEMS_PER_CH, SHOP_ITEMS_PER_BATCH,
@@ -154,16 +154,22 @@ class ArmoredCore6World(World):
                 self.multiworld.early_items[self.player][item_name] = 1
 
     def create_regions(self) -> None:
-        def chapter_region(cycle: int, chapter: int) -> str:
+        def prologue_region(cycle: int) -> str:
             prefix = "" if cycle == 0 else f"{CYCLE_NAMES[cycle]} "
-            return f"{prefix}Chapter {chapter}"
+            return f"{prefix}Prologue"
+            
+        def chapter_region(cycle: int, chapter: int, part: int) -> str:
+            prefix = "" if cycle == 0 else f"{CYCLE_NAMES[cycle]} "
+            return f"{prefix}Chapter {chapter}.{part}"
 
         ncyc = self._num_cycles()
 
         region_names = ["Menu", "Arena", "Ranks"] + [f"Shop Ch{c}" for c in range(1, SHOP_CHAPTERS + 1)]
         for cyc in range(ncyc):
+            region_names.append(prologue_region(cyc))
             for ch in range(1, 6):
-                region_names.append(chapter_region(cyc, ch))
+                for part in range(1, CHAPTER_PARTS[ch]+1):
+                    region_names.append(chapter_region(cyc, ch, part))
 
         regions: Dict[str, Region] = {}
         for name in region_names:
@@ -179,7 +185,7 @@ class ArmoredCore6World(World):
         # Locked Victory event per cycle ending
         route_names = ["Route A Clear", "Route B Clear", "Route C Clear"]
         for cyc in range(ncyc):
-            reg = regions[chapter_region(cyc, 5)]
+            reg = regions[chapter_region(cyc, 5, 5)]
             loc = AC6Location(self.player, route_names[cyc], None, reg)
             loc.place_locked_item(
                 AC6Item("Victory", ItemClassification.progression, None, self.player)
@@ -189,32 +195,67 @@ class ArmoredCore6World(World):
         # Locked Chapter N Complete event per chapter (1-4) per cycle.
         # Gates the next chapter entrance and puts each chapter in its own sphere.
         for cyc in range(ncyc):
+            reg = regions[prologue_region(cyc)]
+            ev_name = f"{prologue_region(cyc)} Complete"
+            loc = AC6Location(self.player, ev_name, None, reg)
+            loc.place_locked_item(
+                AC6Item(ev_name, ItemClassification.progression, None, self.player)
+            )
+            reg.locations.append(loc)
+            
             for ch in range(1, 5):
-                reg = regions[chapter_region(cyc, ch)]
-                ev_name = f"{chapter_region(cyc, ch)} Complete"
-                loc = AC6Location(self.player, ev_name, None, reg)
-                loc.place_locked_item(
-                    AC6Item(ev_name, ItemClassification.progression, None, self.player)
-                )
-                reg.locations.append(loc)
+                 for part in range(1, CHAPTER_PARTS[ch] + 1):
+                    reg = regions[chapter_region(cyc, ch, part)]
+                    ev_name = f"{chapter_region(cyc, ch, part)} Complete"
+                    loc = AC6Location(self.player, ev_name, None, reg)
+                    loc.place_locked_item(
+                        AC6Item(ev_name, ItemClassification.progression, None, self.player)
+                    )
+                    reg.locations.append(loc)
+                    
+            for part in range(1, CHAPTER_PARTS[5]):
+                    reg = regions[chapter_region(cyc, 5, part)]
+                    ev_name = f"{chapter_region(cyc, 5, part)} Complete"
+                    loc = AC6Location(self.player, ev_name, None, reg)
+                    loc.place_locked_item(
+                        AC6Item(ev_name, ItemClassification.progression, None, self.player)
+                    )
+                    reg.locations.append(loc)
 
         # Region connections
         menu = regions["Menu"]
-        menu.connect(regions[chapter_region(0, 1)], "Menu -> Chapter 1")
+        menu.connect(regions["Prologue"], "Menu -> Prologue")
         menu.connect(regions["Arena"], "Menu -> Arena")
         menu.connect(regions["Ranks"], "Menu -> Ranks")
         menu.connect(regions["Shop Ch1"], "Menu -> Shop Ch1")
         for c in range(2, SHOP_CHAPTERS + 1):
             menu.connect(regions[f"Shop Ch{c}"], f"Menu -> Shop Ch{c}")
         for cyc in range(ncyc):
+            regions[prologue_region(cyc)].connect(
+                regions[chapter_region(cyc, 1, 1)],
+                f"{prologue_region(cyc)} -> {chapter_region(cyc, 1, 1)}")
+            
             for ch in range(1, 5):
-                a = regions[chapter_region(cyc, ch)]
-                b = regions[chapter_region(cyc, ch + 1)]
-                a.connect(b, f"{chapter_region(cyc, ch)} -> {chapter_region(cyc, ch + 1)}")
+                for part in range(1, CHAPTER_PARTS[ch]):
+                    a = regions[chapter_region(cyc, ch, part)]
+                    b = regions[chapter_region(cyc, ch, part + 1)]
+                    a.connect(b, f"{chapter_region(cyc, ch, part)} -> {chapter_region(cyc, ch, part + 1)}")
+                    
+                regions[chapter_region(cyc, ch, CHAPTER_PARTS[ch])].connect(
+                    regions[chapter_region(cyc, ch+1, 1)],
+                f"{chapter_region(cyc, ch, CHAPTER_PARTS[ch])} -> {chapter_region(cyc, ch + 1, 1)}")
+                    
+            for part in range(1, CHAPTER_PARTS[5]):
+                    a = regions[chapter_region(cyc, 5, part)]
+                    b = regions[chapter_region(cyc, 5, part +1)]
+                    a.connect(b, f"{chapter_region(cyc, 5, part)} -> {chapter_region(cyc, 5, part + 1)}")
+                    
             if cyc + 1 < ncyc:
-                regions[chapter_region(cyc, 5)].connect(
-                    regions[chapter_region(cyc + 1, 1)],
-                    f"{chapter_region(cyc, 5)} -> {chapter_region(cyc + 1, 1)}")
+                regions[chapter_region(cyc, 5, CHAPTER_PARTS[5])].connect(
+                    regions[prologue_region(cyc + 1)],
+                    f"{chapter_region(cyc, 5, CHAPTER_PARTS[5])} -> {prologue_region(cyc + 1)}")
+
+        print(regions)
 
     def create_items(self) -> None:
         self._cached_bpc = self._compute_batches_per_ch()

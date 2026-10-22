@@ -2,12 +2,15 @@ from worlds.AutoWorld import World
 from worlds.generic.Rules import set_rule
 from BaseClasses import MultiWorld
 
-from .locations import CYCLE_NAMES, SHOP_CHAPTERS
+from .locations import CYCLE_NAMES, SHOP_CHAPTERS, CHAPTER_PARTS
 
-
-def _chapter_region(cycle: int, chapter: int) -> str:
+def _prologue_region(cycle: int) -> str:
     prefix = "" if cycle == 0 else f"{CYCLE_NAMES[cycle]} "
-    return f"{prefix}Chapter {chapter}"
+    return f"{prefix}Prologue"
+
+def _chapter_region(cycle: int, chapter: int, part) -> str:
+    prefix = "" if cycle == 0 else f"{CYCLE_NAMES[cycle]} "
+    return f"{prefix}Chapter {chapter}.{part}"
 
 
 def set_rules(world: World, multiworld: MultiWorld, player: int) -> None:
@@ -16,7 +19,7 @@ def set_rules(world: World, multiworld: MultiWorld, player: int) -> None:
     # Require access passes so NG+/NG++ locations are not sphere 0.
     cycle_pass = {1: "NG+ Access", 2: "NG++ Access"}
     for cyc in range(1, world._num_cycles()):
-        entrance = f"{_chapter_region(cyc - 1, 5)} -> {_chapter_region(cyc, 1)}"
+        entrance = f"{_chapter_region(cyc - 1, 5, 5)} -> {_prologue_region(cyc)}"
         set_rule(
             multiworld.get_entrance(entrance, player),
             lambda state, it=cycle_pass[cyc]: state.has(it, player),
@@ -26,21 +29,44 @@ def set_rules(world: World, multiworld: MultiWorld, player: int) -> None:
     # Each chapter requires the previous chapter's locked Complete event.
     # Spheres: NG 1-5, NG+ 6-10, NG++ 11-15.
     for cyc in range(world._num_cycles()):
+        entrance = f"{_prologue_region(cyc)} -> {_chapter_region(cyc, 1, 1)}"
+        set_rule(
+            multiworld.get_entrance(entrance, player),
+            lambda state, it=f"{_prologue_region(cyc)} Complete":
+                state.has(it, player),
+        )
+            
         for ch in range(1, 5):
-            entrance = f"{_chapter_region(cyc, ch)} -> {_chapter_region(cyc, ch + 1)}"
+            for part in range(1, CHAPTER_PARTS[ch]):
+                entrance = f"{_chapter_region(cyc, ch, part)} -> {_chapter_region(cyc, ch, part + 1)}"
+                set_rule(
+                    multiworld.get_entrance(entrance, player),
+                    lambda state, it=f"{_chapter_region(cyc, ch, part)} Complete":
+                        state.has(it, player),
+                )
+                
+            entrance = f"{_chapter_region(cyc, ch, CHAPTER_PARTS[ch])} -> {_chapter_region(cyc, ch + 1, 1)}"
             set_rule(
                 multiworld.get_entrance(entrance, player),
-                lambda state, it=f"{_chapter_region(cyc, ch)} Complete":
+                lambda state, it=f"{_chapter_region(cyc, ch, CHAPTER_PARTS[ch])} Complete":
                     state.has(it, player),
             )
+        
+        for part in range(1, CHAPTER_PARTS[5]):
+                entrance = f"{_chapter_region(cyc, 5, part)} -> {_chapter_region(cyc, 5, part + 1)}"
+                set_rule(
+                    multiworld.get_entrance(entrance, player),
+                    lambda state, it=f"{_chapter_region(cyc, 5, part)} Complete":
+                        state.has(it, player),
+                )
 
     # -- Shop chapter gating ---------------------------------------------
     # Solver-side only; DLL handles the actual in-game unlock.
     if world._compute_batches_per_ch() > 0:
         shop_gates = {
-            2: "Chapter 1 Complete",
-            3: "Chapter 2 Complete",
-            4: "Chapter 3 Complete",
+            2: "Chapter 1.6 Complete",
+            3: "Chapter 2.3 Complete",
+            4: "Chapter 3.6 Complete",
         }
         for ch, required in shop_gates.items():
             set_rule(

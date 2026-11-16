@@ -110,3 +110,5 @@ modes are disabled pending further testing.
 - Crashing during a mission removes items received during that mission.
 
 - `AC60000.sl2` is the only way to recover progress - always back up first.
+
+- AC6AP does not work with Dark Souls 3 AP

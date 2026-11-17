@@ -19,54 +19,100 @@ def _loc(flag_id: int, region: str, questline: str | None = None) -> AC6Location
 # ---------------------------------------------------------------------------
 # Core locations
 # ---------------------------------------------------------------------------
+CHAPTER_PARTS = {1: 6, 2: 3, 3: 6, 4: 6, 5: 5}
+
 LOCATION_TABLE: dict[str, AC6LocationData] = {
 
-    # Chapter 1
-    "Illegal Entry":                       _loc(3400, "Chapter 1"),
-    "Destroy Artillery Installations":     _loc(3401, "Chapter 1"),
-    "Grid 135 Cleanup":                    _loc(3402, "Chapter 1"),
-    "Destroy the Transport Helicopters":   _loc(3403, "Chapter 1"),
-    "Destroy the Tester AC":               _loc(3404, "Chapter 1"),
-    "Attack the Dam Complex/Attack the Dam Complex (alt.)": _loc(3406, "Chapter 1"),
-    "Destroy the Weaponized Mining Ship":  _loc(3407, "Chapter 1"),
-    "Operation Wallclimber":               _loc(3450, "Chapter 1"),
-    "Retrieve Combat Logs/Prisoner Rescue": _loc(3451, "Chapter 1"),
-    "Investigate BAWS Arsenal No. 2":      _loc(3452, "Chapter 1"),
-    "Attack the Watchpoint":               _loc(3453, "Chapter 1"),
+    # Prologue
+    "Illegal Entry":                       _loc(3400, "Prologue"),
+    
+    # Chapter 1.1
+    "Destroy Artillery Installations":     _loc(3401, "Chapter 1.1"),
+    "Grid 135 Cleanup":                    _loc(3402, "Chapter 1.1"),
+    
+    # Chapter 1.2
+    "Destroy the Transport Helicopters":   _loc(3403, "Chapter 1.2"),
+    "Destroy the Tester AC":               _loc(3404, "Chapter 1.2"),
+    
+    # Chapter 1.3
+    "Attack the Dam Complex/Attack the Dam Complex (alt.)": _loc(3406, "Chapter 1.3"),
+    "Destroy the Weaponized Mining Ship":  _loc(3407, "Chapter 1.3"),
+    
+    # Chapter 1.4
+    "Operation Wallclimber":               _loc(3450, "Chapter 1.4"),
+    
+    # Chapter 1.5
+    "Retrieve Combat Logs/Prisoner Rescue": _loc(3451, "Chapter 1.5"),
+    "Investigate BAWS Arsenal No. 2":      _loc(3452, "Chapter 1.5"),
+    
+    # Chapter 1.6
+    "Attack the Watchpoint":               _loc(3453, "Chapter 1.6"),
 
-    # Chapter 2
-    "Infiltrate Grid 086":                 _loc(3410, "Chapter 2"),
-    "Eliminate the Doser Faction/Stop the Secret Data Breach": _loc(3411, "Chapter 2"),
-    "Ocean Crossing":                      _loc(3412, "Chapter 2"),
+    # Chapter 2.1
+    "Infiltrate Grid 086":                 _loc(3410, "Chapter 2.1"),
+    
+    # Chapter 2.2
+    "Eliminate the Doser Faction/Stop the Secret Data Breach": _loc(3411, "Chapter 2.2"),
+    
+    # Chapter 2.3
+    "Ocean Crossing":                      _loc(3412, "Chapter 2.3"),
 
-    # Chapter 3
-    "Steal the Survey Data":               _loc(3420, "Chapter 3"),
-    "Attack the Refueling Base":           _loc(3421, "Chapter 3"),
-    "Eliminate V.VII":                     _loc(3422, "Chapter 3"),
-    "Survey the Uninhabited Floating City": _loc(3423, "Chapter 3"),
-    "Tunnel Sabotage/Prevent Corporate Salvage of New Tech": _loc(3424, "Chapter 3"),
-    "Heavy Missile Launch Support":        _loc(3427, "Chapter 3"),
-    "Attack the Old Spaceport":            _loc(3428, "Chapter 3"),
-    "Eliminate the Enforcement Squads/Destroy the Special Forces Craft": _loc(3429, "Chapter 3"),
-    "Eliminate Honest Brute":              _loc(3461, "Chapter 3"),
-    "Defend the Old Spaceport/Defend the Dam Complex": _loc(3462, "Chapter 3"),
-    "Historic Data Recovery":              _loc(3463, "Chapter 3"),
-    "Destroy the Ice Worm":                _loc(3464, "Chapter 3"),
+    # Chapter 3.1
+    "Steal the Survey Data":               _loc(3420, "Chapter 3.1"),
+    
+    # Chapter 3.2
+    "Attack the Refueling Base":           _loc(3421, "Chapter 3.2"),
+    "Eliminate V.VII":                     _loc(3422, "Chapter 3.2"),
+    "Tunnel Sabotage/Prevent Corporate Salvage of New Tech": _loc(3424, "Chapter 3.2"),
+    
+    # Chapter 3.3
+    "Survey the Uninhabited Floating City": _loc(3423, "Chapter 3.3"),
+    "Heavy Missile Launch Support":        _loc(3427, "Chapter 3.3"),
+    "Eliminate the Enforcement Squads/Destroy the Special Forces Craft": _loc(3429, "Chapter 3.3"),
+    
+    # Chapter 3.4
+    "Attack the Old Spaceport":            _loc(3428, "Chapter 3.4"),
+    
+    # Chapter 3.5
+    "Eliminate Honest Brute":              _loc(3461, "Chapter 3.5"),
+    "Defend the Old Spaceport/Defend the Dam Complex": _loc(3462, "Chapter 3.5"),
+    "Historic Data Recovery":              _loc(3463, "Chapter 3.5"),
+    
+    # Chapter 3.6
+    "Destroy the Ice Worm":                _loc(3464, "Chapter 3.6"),
 
-    # Chapter 4
-    "Underground Exploration: Depth 1":    _loc(3430, "Chapter 4"),
-    "Underground Exploration: Depth 2":    _loc(3431, "Chapter 4"),
-    "Underground Exploration: Depth 3":    _loc(3432, "Chapter 4"),
-    "Ambush the Vespers/Intercept the Redguns": _loc(3433, "Chapter 4"),
-    "Unknown Territory Survey":            _loc(3434, "Chapter 4"),
-    "Reach the Coral Convergence":         _loc(3435, "Chapter 4"),
+    # Chapter 4.1
+    "Underground Exploration: Depth 1":    _loc(3430, "Chapter 4.1"),
+    
+    # Chapter 4.2
+    "Underground Exploration: Depth 2":    _loc(3431, "Chapter 4.2"),
+    
+    # Chapter 4.3
+    "Underground Exploration: Depth 3":    _loc(3432, "Chapter 4.3"),
+    
+    # Chapter 4.4
+    "Ambush the Vespers/Intercept the Redguns": _loc(3433, "Chapter 4.4"),
+    
+    # Chapter 4.5
+    "Unknown Territory Survey":            _loc(3434, "Chapter 4.5"),
+    
+    # Chapter 4.6
+    "Reach the Coral Convergence":         _loc(3435, "Chapter 4.6"),
 
-    # Chapter 5
-    "Escape":                              _loc(3440, "Chapter 5"),
-    "Take the Uninhabited Floating City":  _loc(3441, "Chapter 5"),
-    "Intercept the Corporate Forces/Eliminate Cinder Carla": _loc(3442, "Chapter 5"),
-    "Breach the Karman Line/Destroy the Drive Block": _loc(3443, "Chapter 5"),
-    "Shut Down the Closure Satellites/Bring Down the Xylem": _loc(3447, "Chapter 5"),
+    # Chapter 5.1
+    "Escape":                              _loc(3440, "Chapter 5.1"),
+    
+    # Chapter 5.2
+    "Take the Uninhabited Floating City":  _loc(3441, "Chapter 5.2"),
+    
+    # Chapter 5.3
+    "Intercept the Corporate Forces/Eliminate Cinder Carla": _loc(3442, "Chapter 5.3"),
+    
+    # Chapter 5.4
+    "Breach the Karman Line/Destroy the Drive Block": _loc(3443, "Chapter 5.4"),
+    
+    # Chapter 5.5
+    "Shut Down the Closure Satellites/Bring Down the Xylem": _loc(3447, "Chapter 5.5"),
 
     # Ranks
     "Reach Mercenary Rank 1":         _loc(6401, "Ranks"),

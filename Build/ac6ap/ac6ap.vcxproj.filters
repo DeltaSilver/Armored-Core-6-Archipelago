@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="apclient.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="configui.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="dllmain.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="flagwatcher.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="flagwriter.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="libs\easywsclient.hpp"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="locations.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="memory.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="overlay.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="partnames.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="shopslots.h"><Filter>Header Files</Filter></ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="apclient.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="configui.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="dllmain.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="flagwatcher.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="flagwriter.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="libs\easywsclient.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="memory.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="overlay.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="shopslots.cpp"><Filter>Source Files</Filter></ClCompile>
+  </ItemGroup>
+</Project>

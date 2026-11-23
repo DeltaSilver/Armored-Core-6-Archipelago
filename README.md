@@ -33,8 +33,7 @@ mod/
 ├── ac6ap.dll
 ├── ac6ap.cfg
 ├── regulation.bin
-├── event/
-└── msg/
+└── event/
 ```
 3. **Register the DLL** in `config_armoredcore6.toml`:
    ```toml

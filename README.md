@@ -60,7 +60,6 @@ It saves your entries back to `ac6ap.cfg` and reconnects without restarting.
   the Enforcement Squads/Destroy the Special Forces Craft).
 - **Mercenary ranks** - reach each merc rank 1-17.
 - **Arena** - clear Arena ranks F → S, plus the three simulators.
-- **Shop** - optional purchase checks (off by default).
 
 A single run follows one route, so branch-reserved missions that never fire are
 trimmed from the seed. See [`FLAG_REFERENCE.md`](FLAG_REFERENCE.md) for the exact
@@ -86,7 +85,6 @@ objective awards.
 | Option | Values | Description |
 |--------|--------|-------------|
 | `mission_reward_multiplier` | 1-4 | Item checks awarded per mission / arena / rank objective |
-| `shop_checks` | true / false | Add shop purchases as check locations (leftover parts spill into the shop) |
 | `mercenary_rank_checks` | 0-17 | How many mercenary rank checks to include |
 | `arena_checks` | 0-10 | How many arena checks to include (F → S, then the three simulators) |
 
@@ -109,5 +107,3 @@ modes are disabled pending further testing.
 - Crashing during a mission removes items received during that mission.
 
 - `AC60000.sl2` is the only way to recover progress - always back up first.
-
-- AC6AP does not work with Dark Souls 3 AP

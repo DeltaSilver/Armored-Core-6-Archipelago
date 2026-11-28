@@ -43,7 +43,7 @@ class ShopChecks(Toggle):
     missions, arena and ranks (up to 300 slots across 4 chapters).
     """
     display_name = "Shop Checks"
-    default = 1
+    default = 0
 
 
 class ShopProgressionPercent(Range):
@@ -61,8 +61,10 @@ class ShopProgressionPercent(Range):
 @dataclass
 class AC6Options(PerGameCommonOptions):
     mission_reward_multiplier:  MissionRewardMultiplier
-    shop_checks:                ShopChecks
-    shop_progression_percent:   ShopProgressionPercent
+    # Shops are disabled (see SHOP_CHECKS_ENABLED in __init__.py); uncomment
+    # these to expose them in the YAML again.
+    # shop_checks:                ShopChecks
+    # shop_progression_percent:   ShopProgressionPercent
     mercenary_rank_checks:      MercenaryRankChecks
     arena_checks:                ArenaChecks
     # death_link:                 DeathLink

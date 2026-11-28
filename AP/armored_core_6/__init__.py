@@ -26,6 +26,10 @@ from typing import Dict, Any, List
 
 EARLY_ITEMS = ["VE-60SNA (L)"]
 
+# Shop checks are turned off and hidden from the YAML. The shop code is kept;
+# to re-enable, set this True and uncomment the shop options in options.py.
+SHOP_CHECKS_ENABLED = False
+
 
 def _merge_unique(*tables: Dict[str, AC6LocationData]) -> Dict[str, AC6LocationData]:
     """Merge location tables, failing on duplicate names or IDs (a silent
@@ -89,7 +93,7 @@ class ArmoredCore6World(World):
     # -- Option helpers --------------------------------------------------
 
     def _shop_checks_on(self) -> bool:
-        return bool(self.options.shop_checks.value)
+        return SHOP_CHECKS_ENABLED and bool(self.options.shop_checks.value)
 
     def _compute_batches_per_ch(self) -> int:
         if not self._shop_checks_on():
